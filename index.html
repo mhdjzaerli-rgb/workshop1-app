@@ -911,6 +911,9 @@ function showToast(msg,type='info'){
 
 // INIT
 renderFilterBar();applyFilters();
+  if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js");
+}
 </script>
 </body>
 </html>
