@@ -1,4 +1,4 @@
-const CACHE="workshop-pwa-v1";
+const CACHE="workshop1-pwa-v1";
 const FILES=[
   "./",
   "./index.html",
@@ -14,4 +14,5 @@ self.addEventListener("fetch",e=>{
   e.respondWith(
     caches.match(e.request).then(r=>r||fetch(e.request))
   );
+
 });
