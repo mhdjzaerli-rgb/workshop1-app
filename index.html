@@ -1,21 +1,20 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#2c1a0e">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#2c1a0e">
 <title>ورشة الخياطة</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- Firebase loaded as regular scripts (NO type=module) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;900&family=Amiri:wght@400;700&display=swap');
-
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Amiri:wght@400;700&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-
 :root{
   --bg:#fdf8f2;--bg2:#f0e8d8;--surface:#fff;--surface2:#faf5ee;
   --border:#e2d0b8;--border2:#c8a87a;
@@ -24,111 +23,112 @@
   --teal:#1a6b5c;--teal2:#1f8470;--teal-light:#d8f0ea;
   --rose:#8b2a3a;--rose-light:#f5dde1;
   --blue:#1a4a8b;--purple:#5a2a8b;
-  --nav-h:64px;
-  --top-h:60px;
+  --nav-h:64px;--top-h:60px;
   --safe-b:env(safe-area-inset-bottom,0px);
 }
-
-html,body{height:100%;overflow:hidden;}
-body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--ink);display:flex;flex-direction:column;}
-
-/* ══ TOP BAR ══ */
-.topbar{
-  height:var(--top-h);
-  background:linear-gradient(135deg,#2c1a0e,#4a2c14);
-  display:flex;align-items:center;justify-content:space-between;
-  padding:0 1rem;
-  border-bottom:2px solid var(--gold);
-  flex-shrink:0;
-  position:relative;z-index:50;
-  box-shadow:0 2px 12px rgba(0,0,0,.4);
-}
-.topbar-brand{display:flex;align-items:center;gap:.6rem;}
-.topbar-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--gold),var(--gold2));border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;}
-.topbar-title{font-family:'Amiri',serif;font-size:1.1rem;font-weight:700;color:#f5e6c0;}
-.topbar-sub{font-size:.6rem;color:var(--gold2);line-height:1;}
-.topbar-btn{width:36px;height:36px;border:none;background:rgba(255,255,255,.1);border-radius:9px;color:#f5e6c0;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;}
-.topbar-btn:active{background:rgba(255,255,255,.25);}
-
-/* ══ SCROLL AREA ══ */
-.scroll-area{
-  flex:1;overflow-y:auto;overflow-x:hidden;
-  -webkit-overflow-scrolling:touch;
-  padding-bottom:calc(var(--nav-h) + var(--safe-b) + .5rem);
-}
-
-/* ══ BOTTOM NAV ══ */
-.bottom-nav{
-  height:calc(var(--nav-h) + var(--safe-b));
-  padding-bottom:var(--safe-b);
-  background:var(--surface);
-  border-top:1px solid var(--border);
-  display:flex;
-  flex-shrink:0;
-  box-shadow:0 -2px 15px rgba(44,26,14,.12);
-  position:relative;z-index:50;
-}
-.nav-btn{
-  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:.2rem;border:none;background:transparent;
-  font-family:'Cairo',sans-serif;font-size:.62rem;font-weight:600;
-  color:var(--ink3);cursor:pointer;transition:color .2s;
-  padding:.4rem 0;
-}
-.nav-btn .nav-icon{font-size:1.35rem;transition:transform .2s;}
-.nav-btn.active{color:var(--gold);}
-.nav-btn.active .nav-icon{transform:scale(1.15);}
-.nav-btn:active .nav-icon{transform:scale(.9);}
-
-/* ══ PAGES ══ */
-.page{display:none;animation:fadeIn .2s ease;}
-.page.active{display:block;}
-@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-
-/* ══ FAB ══ */
-.fab{
-  position:fixed;
-  left:50%;transform:translateX(-50%);
-  bottom:calc(var(--nav-h) + var(--safe-b) + .8rem);
-  z-index:40;
-  width:56px;height:56px;
-  background:linear-gradient(135deg,var(--gold),var(--gold2));
-  border:none;border-radius:50%;
-  font-size:1.6rem;color:white;
-  box-shadow:0 4px 20px rgba(184,137,42,.5);
-  cursor:pointer;transition:transform .2s,box-shadow .2s;
-  display:flex;align-items:center;justify-content:center;
-}
-.fab:active{transform:translateX(-50%) scale(.92);}
-
-/* ══ SECTION HEADER ══ */
-.sec-header{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:.75rem 1rem .5rem;
-}
-.sec-title{font-family:'Amiri',serif;font-size:1rem;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:.4rem;}
-.sec-count{font-size:.7rem;color:var(--ink3);background:var(--bg2);padding:.15rem .5rem;border-radius:12px;}
-
-/* ══ MINI STATS ROW ══ */
+html,body{height:100%;overflow:hidden;font-family:'Cairo',sans-serif;background:var(--bg);color:var(--ink);}
+[id^="screen-"]{display:none;flex-direction:column;height:100%;width:100%;}
+#screen-loading{background:linear-gradient(135deg,#2c1a0e,#4a2c14);align-items:center;justify-content:center;gap:1.2rem;display:flex;}
+.loading-icon{font-size:3.5rem;animation:pulse 1.2s ease-in-out infinite;}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+.loading-text{font-family:'Amiri',serif;font-size:1.3rem;color:#f5e6c0;}
+.loading-sub{font-size:.78rem;color:var(--gold2);}
+.loading-bar{width:160px;height:4px;background:rgba(255,255,255,.15);border-radius:2px;overflow:hidden;}
+.loading-bar-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));animation:loadBar 1.8s ease-in-out infinite;}
+@keyframes loadBar{0%{width:0%;margin-right:100%}50%{width:60%;margin-right:20%}100%{width:0%;margin-left:100%}}
+#screen-home{background:linear-gradient(160deg,#2c1a0e 0%,#4a2c14 40%,#2c1a0e 100%);align-items:center;overflow-y:auto;padding:2rem 1.2rem calc(1.5rem + var(--safe-b));}
+.home-logo{display:flex;flex-direction:column;align-items:center;gap:.6rem;margin-bottom:2rem;}
+.home-logo-icon{width:72px;height:72px;background:linear-gradient(135deg,var(--gold),var(--gold2));border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:2.2rem;box-shadow:0 8px 30px rgba(184,137,42,.4);}
+.home-logo-title{font-family:'Amiri',serif;font-size:1.6rem;color:#f5e6c0;font-weight:700;}
+.home-logo-sub{font-size:.75rem;color:var(--gold2);}
+.home-section-label{font-size:.75rem;font-weight:700;color:var(--gold2);letter-spacing:1.5px;margin-bottom:.75rem;align-self:flex-start;width:100%;max-width:420px;}
+.worker-pick-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;width:100%;max-width:420px;margin-bottom:1.5rem;}
+.worker-pick-btn{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:16px;padding:1rem .75rem;display:flex;flex-direction:column;align-items:center;gap:.5rem;cursor:pointer;font-family:'Cairo',sans-serif;}
+.worker-pick-btn:active{background:rgba(255,255,255,.22);transform:scale(.95);}
+.wpb-avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold2));display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:700;color:white;}
+.wpb-name{font-size:.88rem;font-weight:700;color:#f5e6c0;}
+.home-divider{width:100%;max-width:420px;display:flex;align-items:center;gap:.75rem;margin-bottom:1.2rem;}
+.home-divider-line{flex:1;height:1px;background:rgba(255,255,255,.12);}
+.home-divider-text{font-size:.72rem;color:rgba(255,255,255,.4);}
+.admin-login-btn{width:100%;max-width:420px;padding:.85rem;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.2);border-radius:14px;font-family:'Cairo',sans-serif;font-size:.9rem;font-weight:700;color:rgba(255,255,255,.7);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.5rem;}
+.admin-login-btn:active{background:rgba(0,0,0,.5);}
+.admin-pw-sheet{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:flex-end;justify-content:center;z-index:500;}
+.admin-pw-sheet.show{display:flex;}
+.admin-pw-box{background:var(--surface);border-radius:22px 22px 0 0;width:100%;padding:1.5rem 1.5rem calc(1.5rem + var(--safe-b));}
+.apw-handle{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto .75rem;}
+.apw-title{font-family:'Amiri',serif;font-size:1.15rem;font-weight:700;color:var(--gold);text-align:center;margin-bottom:1.2rem;}
+.apw-icon{font-size:2.2rem;text-align:center;margin-bottom:.5rem;}
+.apw-input{width:100%;padding:.85rem 1rem;background:var(--bg2);border:2px solid var(--border2);border-radius:13px;font-family:'Cairo',sans-serif;font-size:1.1rem;text-align:center;color:var(--ink);outline:none;letter-spacing:.15rem;margin-bottom:.5rem;}
+.apw-input:focus{border-color:var(--gold);}
+.apw-err{text-align:center;color:var(--rose);font-size:.82rem;font-weight:600;display:none;margin-bottom:.5rem;}
+.apw-btns{display:flex;gap:.65rem;margin-top:.5rem;}
+.apw-cancel{flex:1;padding:.75rem;background:var(--bg2);border:1px solid var(--border2);border-radius:12px;font-family:'Cairo',sans-serif;font-size:.88rem;font-weight:700;color:var(--ink2);cursor:pointer;}
+.apw-submit{flex:2;padding:.75rem;background:linear-gradient(135deg,#2c1a0e,#4a2c14);border:1px solid var(--gold);border-radius:12px;font-family:'Cairo',sans-serif;font-size:.88rem;font-weight:700;color:#f5e6c0;cursor:pointer;}
+#screen-workerApp{background:var(--bg);overflow:hidden;}
+.worker-topbar{height:var(--top-h);background:linear-gradient(135deg,var(--teal),var(--teal2));display:flex;align-items:center;justify-content:space-between;padding:0 1rem;flex-shrink:0;box-shadow:0 2px 12px rgba(0,0,0,.25);}
+.wt-info{display:flex;align-items:center;gap:.6rem;}
+.wt-avatar{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:.9rem;font-weight:700;color:white;}
+.wt-name{font-weight:700;font-size:1rem;color:white;}
+.wt-role{font-size:.6rem;color:rgba(255,255,255,.75);}
+.wt-stats{display:flex;gap:.5rem;align-items:center;}
+.wt-stat{background:rgba(0,0,0,.2);border-radius:9px;padding:.3rem .6rem;text-align:center;}
+.wt-stat-val{font-size:.95rem;font-weight:900;color:white;}
+.wt-stat-lbl{font-size:.55rem;color:rgba(255,255,255,.7);}
+.exit-btn{padding:.4rem .8rem;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:9px;color:white;font-family:'Cairo',sans-serif;font-size:.78rem;font-weight:600;cursor:pointer;}
+.worker-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:1rem;}
+.quick-add-card{margin:.85rem;background:var(--surface);border:2px solid var(--teal);border-radius:18px;overflow:hidden;box-shadow:0 4px 20px rgba(26,107,92,.15);}
+.qac-header{background:linear-gradient(135deg,var(--teal),var(--teal2));padding:.75rem 1rem;display:flex;align-items:center;gap:.5rem;}
+.qac-header-title{font-family:'Amiri',serif;font-size:1rem;color:white;font-weight:700;}
+.qac-body{padding:1rem;}
+.wform-group{margin-bottom:.85rem;}
+.wform-group label{display:block;font-size:.72rem;font-weight:700;color:var(--ink2);margin-bottom:.35rem;}
+.wform-group select,.wform-group input[type=date],.wform-group input[type=text]{width:100%;padding:.65rem .9rem;background:var(--bg2);border:1.5px solid var(--border2);border-radius:11px;font-family:'Cairo',sans-serif;font-size:1rem;color:var(--ink);outline:none;-webkit-appearance:none;}
+.wform-group select:focus,.wform-group input:focus{border-color:var(--teal);}
+.wform-grid2{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;}
+.qty-control{display:flex;align-items:center;gap:.75rem;}
+.qty-btn{width:48px;height:48px;border:none;background:var(--teal-light);border-radius:12px;font-size:1.4rem;font-weight:700;color:var(--teal);cursor:pointer;}
+.qty-btn:active{background:var(--teal);color:white;}
+.qty-val{flex:1;text-align:center;font-size:1.6rem;font-weight:900;color:var(--ink);}
+.worker-submit-btn{width:100%;padding:.9rem;background:linear-gradient(135deg,var(--teal),var(--teal2));border:none;border-radius:13px;font-family:'Cairo',sans-serif;font-size:1rem;font-weight:700;color:white;cursor:pointer;margin-top:.5rem;}
+.worker-submit-btn:active{opacity:.88;}
+.worker-recents-section{margin:.5rem .85rem .85rem;}
+.wrs-title{font-family:'Amiri',serif;font-size:.95rem;font-weight:700;color:var(--ink);margin-bottom:.6rem;}
+.wrec-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:.75rem;margin-bottom:.55rem;}
+.wrec-date{font-size:.7rem;color:var(--ink3);margin-bottom:.35rem;}
+.wrec-tags{display:flex;gap:.4rem;flex-wrap:wrap;}
+#screen-adminApp{background:var(--bg);overflow:hidden;}
+.admin-topbar{height:var(--top-h);background:linear-gradient(135deg,#2c1a0e,#4a2c14);display:flex;align-items:center;justify-content:space-between;padding:0 1rem;border-bottom:2px solid var(--gold);flex-shrink:0;}
+.at-brand{display:flex;align-items:center;gap:.55rem;}
+.at-icon{width:34px;height:34px;background:linear-gradient(135deg,var(--gold),var(--gold2));border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1rem;}
+.at-title{font-family:'Amiri',serif;font-size:1rem;font-weight:700;color:#f5e6c0;}
+.at-sub{font-size:.58rem;color:var(--gold2);}
+.at-actions{display:flex;align-items:center;gap:.4rem;}
+.topbar-btn{width:34px;height:34px;border:none;background:rgba(255,255,255,.1);border-radius:9px;color:#f5e6c0;font-size:.88rem;cursor:pointer;}
+.admin-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(var(--nav-h) + var(--safe-b) + .5rem);}
+.bottom-nav{height:calc(var(--nav-h) + var(--safe-b));padding-bottom:var(--safe-b);background:var(--surface);border-top:1px solid var(--border);display:flex;flex-shrink:0;}
+.anav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.2rem;border:none;background:transparent;font-family:'Cairo',sans-serif;font-size:.62rem;font-weight:600;color:var(--ink3);cursor:pointer;padding:.4rem 0;}
+.anav-btn .nav-icon{font-size:1.35rem;}
+.anav-btn.active{color:var(--gold);}
+.apage{display:none;}
+.apage.active{display:block;}
+.fab{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--nav-h) + var(--safe-b) + .8rem);z-index:40;width:56px;height:56px;background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;border-radius:50%;font-size:1.6rem;color:white;box-shadow:0 4px 20px rgba(184,137,42,.5);cursor:pointer;display:flex;align-items:center;justify-content:center;}
 .mini-stats{display:flex;gap:.6rem;padding:.4rem 1rem .7rem;overflow-x:auto;scrollbar-width:none;}
 .mini-stats::-webkit-scrollbar{display:none;}
-.mini-stat{
-  background:var(--surface);border:1px solid var(--border);border-radius:12px;
-  padding:.5rem .85rem;display:flex;align-items:center;gap:.5rem;flex-shrink:0;
-  box-shadow:0 1px 6px rgba(44,26,14,.06);
-}
+.mini-stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:.5rem .85rem;display:flex;align-items:center;gap:.5rem;flex-shrink:0;}
 .mini-stat-icon{font-size:1.1rem;}
 .mini-stat-val{font-size:1rem;font-weight:800;color:var(--ink);}
 .mini-stat-lbl{font-size:.6rem;color:var(--ink3);}
-
-/* ══ RECORD CARDS ══ */
+.sec-header{display:flex;align-items:center;justify-content:space-between;padding:.75rem 1rem .5rem;}
+.sec-title{font-family:'Amiri',serif;font-size:1rem;font-weight:700;color:var(--ink);}
+.sec-count{font-size:.7rem;color:var(--ink3);background:var(--bg2);padding:.15rem .5rem;border-radius:12px;}
+.filter-scroll{display:flex;gap:.5rem;padding:.5rem 1rem;overflow-x:auto;scrollbar-width:none;}
+.filter-scroll::-webkit-scrollbar{display:none;}
+.filter-chip{display:flex;align-items:center;gap:.35rem;padding:.38rem .8rem;background:var(--surface);border:1px solid var(--border2);border-radius:20px;font-family:'Cairo',sans-serif;font-size:.75rem;font-weight:600;color:var(--ink2);cursor:pointer;white-space:nowrap;flex-shrink:0;}
+.filter-chip.active-filter{background:var(--gold);color:white;border-color:var(--gold);}
+.filter-chip select{border:none;background:transparent;font-family:'Cairo',sans-serif;font-size:.75rem;font-weight:600;color:inherit;outline:none;cursor:pointer;}
+.filter-chip.active-filter select{color:white;}
 .cards-list{display:flex;flex-direction:column;gap:.65rem;padding:0 .85rem .5rem;}
-.rec-card{
-  background:var(--surface);border:1px solid var(--border);border-radius:14px;
-  padding:.85rem;box-shadow:0 1px 8px rgba(44,26,14,.06);
-  animation:cardIn .25s ease;
-}
-@keyframes cardIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
+.rec-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:.85rem;}
 .rec-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:.55rem;}
 .rec-worker{display:flex;align-items:center;gap:.5rem;}
 .worker-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold2));display:flex;align-items:center;justify-content:center;font-size:.82rem;font-weight:700;color:white;flex-shrink:0;}
@@ -144,66 +144,29 @@ body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--ink);displa
 .cdot-sm{width:10px;height:10px;border-radius:50%;border:1px solid rgba(0,0,0,.15);flex-shrink:0;}
 .rec-note{font-size:.73rem;color:var(--ink3);background:var(--bg2);border-radius:7px;padding:.3rem .6rem;margin-bottom:.6rem;}
 .rec-actions{display:flex;gap:.5rem;}
-.act-btn{flex:1;padding:.45rem;border:none;border-radius:9px;font-family:'Cairo',sans-serif;font-size:.75rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.3rem;transition:all .15s;}
+.act-btn{flex:1;padding:.45rem;border:none;border-radius:9px;font-family:'Cairo',sans-serif;font-size:.75rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.3rem;}
 .act-edit{background:var(--gold-light);color:var(--gold);border:1px solid rgba(184,137,42,.3);}
-.act-edit:active{background:var(--gold2);color:white;}
 .act-del{background:var(--rose-light);color:var(--rose);border:1px solid rgba(139,42,58,.2);}
-.act-del:active{background:var(--rose);color:white;}
-
-/* ══ EMPTY STATE ══ */
 .empty{text-align:center;padding:3rem 2rem;color:var(--ink3);}
 .empty-icon{font-size:3rem;margin-bottom:.5rem;opacity:.35;}
-.empty p{font-size:.88rem;}
-
-/* ══ FILTER BAR ══ */
-.filter-scroll{display:flex;gap:.5rem;padding:.5rem 1rem;overflow-x:auto;scrollbar-width:none;}
-.filter-scroll::-webkit-scrollbar{display:none;}
-.filter-chip{
-  display:flex;align-items:center;gap:.35rem;padding:.38rem .8rem;
-  background:var(--surface);border:1px solid var(--border2);border-radius:20px;
-  font-family:'Cairo',sans-serif;font-size:.75rem;font-weight:600;color:var(--ink2);
-  cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .15s;
-}
-.filter-chip.active-filter{background:var(--gold);color:white;border-color:var(--gold);}
-.filter-chip select{border:none;background:transparent;font-family:'Cairo',sans-serif;font-size:.75rem;font-weight:600;color:inherit;outline:none;cursor:pointer;}
-.filter-chip.active-filter select{color:white;}
-
-/* ══ SUMMARY PAGE ══ */
 .summary-page{padding:.5rem .85rem;}
-.worker-summary-card{
-  background:var(--surface);border:1px solid var(--border);border-radius:14px;
-  padding:1rem;margin-bottom:.7rem;
-  box-shadow:0 1px 8px rgba(44,26,14,.06);
-}
+.worker-summary-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1rem;margin-bottom:.7rem;}
 .ws-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.7rem;}
 .ws-worker{display:flex;align-items:center;gap:.6rem;}
 .ws-total{font-size:1.6rem;font-weight:900;color:var(--teal);}
-.ws-total-lbl{font-size:.6rem;color:var(--ink3);text-align:center;line-height:1.2;}
+.ws-total-lbl{font-size:.6rem;color:var(--ink3);text-align:center;}
 .ws-models{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:.45rem;}
 .ws-model-item{background:var(--bg2);border-radius:9px;padding:.4rem .5rem;text-align:center;}
 .ws-model-name{font-size:.68rem;color:var(--ink2);font-weight:600;}
 .ws-model-val{font-size:1rem;font-weight:800;color:var(--gold);}
-.ws-bar{height:5px;background:var(--bg2);border-radius:10px;margin-top:.5rem;overflow:hidden;}
-.ws-bar-fill{height:100%;border-radius:10px;background:linear-gradient(90deg,var(--teal),var(--teal2));transition:width .8s cubic-bezier(.34,1.56,.64,1);}
-
-/* ══ REPORT PAGE ══ */
+.ws-bar{height:5px;background:var(--bg2);border-radius:10px;overflow:hidden;}
+.ws-bar-fill{height:100%;border-radius:10px;background:linear-gradient(90deg,var(--teal),var(--teal2));}
 .report-page{padding:.5rem .85rem 0;}
-.report-month-nav{
-  display:flex;align-items:center;justify-content:space-between;
-  background:var(--surface);border:1px solid var(--border);border-radius:14px;
-  padding:.65rem 1rem;margin-bottom:.85rem;
-  box-shadow:0 1px 8px rgba(44,26,14,.06);
-}
+.report-month-nav{display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:.65rem 1rem;margin-bottom:.85rem;}
 .month-disp{font-family:'Amiri',serif;font-size:1.1rem;font-weight:700;color:var(--gold);}
-.nav-arrow{width:36px;height:36px;border:1px solid var(--border2);background:var(--bg2);border-radius:9px;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink2);}
-.nav-arrow:active{background:var(--gold-light);}
-
+.nav-arrow{width:36px;height:36px;border:1px solid var(--border2);background:var(--bg2);border-radius:9px;font-size:1rem;cursor:pointer;color:var(--ink2);}
 .kpi-row{display:grid;grid-template-columns:1fr 1fr;gap:.65rem;margin-bottom:.85rem;}
-.kpi-card{
-  background:var(--surface);border:1px solid var(--border);border-radius:14px;
-  padding:.85rem;text-align:center;position:relative;overflow:hidden;
-  box-shadow:0 1px 8px rgba(44,26,14,.06);
-}
+.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:.85rem;text-align:center;position:relative;overflow:hidden;}
 .kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
 .kpi-card.gold::before{background:linear-gradient(90deg,var(--gold),var(--gold2));}
 .kpi-card.teal::before{background:linear-gradient(90deg,var(--teal),var(--teal2));}
@@ -219,21 +182,18 @@ body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--ink);displa
 .kpi-card.rose .kpi-num{color:var(--rose);}
 .kpi-card.blue .kpi-num{color:var(--blue);}
 .kpi-card.purple .kpi-num{color:var(--purple);}
-.kpi-card.champion .kpi-num{color:var(--gold);font-size:1.2rem;}
+.kpi-card.champion .kpi-num{color:var(--gold);font-size:1.1rem;}
 .kpi-lbl{font-size:.65rem;color:var(--ink3);font-weight:600;margin-top:.15rem;}
-
-.report-section{background:var(--surface);border:1px solid var(--border);border-radius:14px;margin-bottom:.85rem;overflow:hidden;box-shadow:0 1px 8px rgba(44,26,14,.06);}
-.rs-header{padding:.65rem 1rem;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.4rem;}
+.report-section{background:var(--surface);border:1px solid var(--border);border-radius:14px;margin-bottom:.85rem;overflow:hidden;}
+.rs-header{padding:.65rem 1rem;background:var(--surface2);border-bottom:1px solid var(--border);}
 .rs-title{font-family:'Amiri',serif;font-size:.92rem;font-weight:700;color:var(--ink);}
 .rs-body{padding:.85rem;}
-
 .bar-chart{display:flex;flex-direction:column;gap:.6rem;}
 .bar-row{display:flex;align-items:center;gap:.65rem;}
 .bar-lbl{font-size:.75rem;font-weight:600;color:var(--ink2);min-width:62px;text-align:right;}
 .bar-track{flex:1;background:var(--bg2);border-radius:20px;height:22px;overflow:hidden;}
-.bar-fill{height:100%;border-radius:20px;transition:width 1s cubic-bezier(.34,1.56,.64,1);display:flex;align-items:center;justify-content:flex-end;}
+.bar-fill{height:100%;border-radius:20px;display:flex;align-items:center;justify-content:flex-end;}
 .bar-val{font-size:.7rem;font-weight:700;color:white;padding:0 .5rem;white-space:nowrap;}
-
 .rank-list{display:flex;flex-direction:column;gap:.5rem;}
 .rank-item{display:flex;align-items:center;gap:.7rem;background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:.6rem .8rem;}
 .rank-num{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:900;flex-shrink:0;}
@@ -246,7 +206,6 @@ body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--ink);displa
 .rank-name{font-weight:700;font-size:.86rem;}
 .rank-sub{font-size:.65rem;color:var(--ink3);}
 .rank-total{font-size:1.1rem;font-weight:900;color:var(--teal);}
-
 .color-list{display:flex;flex-direction:column;gap:.45rem;}
 .color-row{display:flex;align-items:center;gap:.6rem;}
 .cswatch{width:16px;height:16px;border-radius:4px;border:1.5px solid rgba(0,0,0,.12);flex-shrink:0;}
@@ -254,111 +213,55 @@ body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--ink);displa
 .ctrack{flex:2;background:var(--bg2);border-radius:10px;height:9px;overflow:hidden;}
 .cfill{height:100%;border-radius:10px;}
 .ccnt{font-size:.72rem;font-weight:700;color:var(--ink);min-width:32px;text-align:left;}
-
 .size-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:.4rem;margin-bottom:.7rem;}
 .size-item{background:var(--bg2);border-radius:9px;padding:.5rem .3rem;text-align:center;}
 .size-lbl{font-size:.72rem;font-weight:700;color:var(--teal);}
 .size-val{font-size:1rem;font-weight:900;}
 .size-pct{font-size:.6rem;color:var(--ink3);}
-
 .daily-cards{display:flex;flex-direction:column;gap:.5rem;}
 .day-card{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:.65rem .85rem;display:flex;align-items:center;gap:.8rem;}
-.day-date{min-width:75px;}
+.day-date{min-width:65px;}
 .day-d{font-size:.82rem;font-weight:700;color:var(--ink);}
 .day-dow{font-size:.62rem;color:var(--ink3);}
 .day-bar-wrap{flex:1;}
 .day-bar-track{background:var(--bg2);border-radius:10px;height:10px;margin-top:.25rem;overflow:hidden;}
 .day-bar-fill{height:100%;border-radius:10px;background:linear-gradient(90deg,var(--teal),var(--teal2));}
 .day-qty{font-size:1.1rem;font-weight:900;color:var(--teal);}
-.peak-chip{background:var(--gold-light);color:var(--gold);border-radius:5px;padding:.1rem .35rem;font-size:.6rem;font-weight:700;margin-right:.25rem;}
-
-.export-btn-full{
-  width:100%;padding:.85rem;
-  background:linear-gradient(135deg,var(--blue),#2060b0);
-  border:none;border-radius:13px;
-  font-family:'Cairo',sans-serif;font-size:.9rem;font-weight:700;
-  color:white;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.5rem;
-  margin-bottom:.85rem;box-shadow:0 3px 12px rgba(26,74,139,.3);
-  transition:transform .15s;
-}
-.export-btn-full:active{transform:scale(.97);}
-
-/* ══ SETTINGS PAGE ══ */
+.peak-chip{background:var(--gold-light);color:var(--gold);border-radius:5px;padding:.1rem .35rem;font-size:.6rem;font-weight:700;}
+.export-btn-full{width:100%;padding:.85rem;background:linear-gradient(135deg,var(--blue),#2060b0);border:none;border-radius:13px;font-family:'Cairo',sans-serif;font-size:.9rem;font-weight:700;color:white;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.5rem;margin-bottom:.85rem;}
 .settings-page{padding:.5rem .85rem;}
 .settings-section{background:var(--surface);border:1px solid var(--border);border-radius:14px;margin-bottom:.85rem;overflow:hidden;}
 .settings-section-title{padding:.65rem 1rem;background:var(--surface2);border-bottom:1px solid var(--border);font-family:'Amiri',serif;font-size:.92rem;font-weight:700;color:var(--ink);}
-.settings-item{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:.75rem 1rem;border-bottom:1px solid var(--border);
-}
-.settings-item:last-child{border-bottom:none;}
+.settings-item{display:flex;align-items:center;justify-content:space-between;padding:.75rem 1rem;border-bottom:1px solid var(--border);}
 .si-name{font-size:.88rem;font-weight:600;}
 .si-sub{font-size:.68rem;color:var(--ink3);}
-.si-actions{display:flex;gap:.4rem;}
-.si-del{width:32px;height:32px;border:none;background:var(--rose-light);color:var(--rose);border-radius:8px;font-size:.85rem;cursor:pointer;display:flex;align-items:center;justify-content:center;}
-.si-del:active{background:var(--rose);color:white;}
+.si-del{width:32px;height:32px;border:none;background:var(--rose-light);color:var(--rose);border-radius:8px;font-size:.85rem;cursor:pointer;}
 .add-item-row{padding:.7rem 1rem;}
-.add-item-row input{width:100%;padding:.55rem .85rem;background:var(--bg2);border:1px solid var(--border2);border-radius:9px;font-family:'Cairo',sans-serif;font-size:.88rem;color:var(--ink);outline:none;}
-.add-item-row input:focus{border-color:var(--gold);}
+.add-item-row input[type=text]{width:100%;padding:.55rem .85rem;background:var(--bg2);border:1px solid var(--border2);border-radius:9px;font-family:'Cairo',sans-serif;font-size:.88rem;color:var(--ink);outline:none;}
 .add-item-btn{width:100%;margin-top:.4rem;padding:.55rem;background:var(--gold-light);border:1px solid rgba(184,137,42,.4);border-radius:9px;font-family:'Cairo',sans-serif;font-size:.82rem;font-weight:700;color:var(--gold);cursor:pointer;}
-.add-item-btn:active{background:var(--gold);color:white;}
-
-/* ══ BOTTOM SHEET MODAL ══ */
-.overlay{position:fixed;inset:0;background:rgba(44,26,14,.55);backdrop-filter:blur(4px);display:none;align-items:flex-end;justify-content:center;z-index:200;padding:0;}
-.overlay.show{display:flex;animation:overlayIn .2s ease;}
-@keyframes overlayIn{from{opacity:0}to{opacity:1}}
-.sheet{
-  background:var(--surface);
-  border-radius:20px 20px 0 0;
-  width:100%;max-height:92vh;
-  overflow-y:auto;-webkit-overflow-scrolling:touch;
-  padding:0 0 calc(1rem + var(--safe-b));
-  animation:sheetUp .28s cubic-bezier(.34,1.2,.64,1);
-}
-@keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.overlay{position:fixed;inset:0;background:rgba(44,26,14,.55);display:none;align-items:flex-end;justify-content:center;z-index:200;}
+.overlay.show{display:flex;}
+.sheet{background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-height:92vh;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 0 calc(1rem + var(--safe-b));}
 .sheet-handle{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:.75rem auto .5rem;}
 .sheet-title{font-family:'Amiri',serif;font-size:1.1rem;font-weight:700;color:var(--gold);padding:.3rem 1.2rem .8rem;border-bottom:1px solid var(--border);}
 .sheet-body{padding:1rem 1.2rem;}
-
 .form-group{margin-bottom:.9rem;}
-.form-group label{display:block;font-size:.73rem;font-weight:700;color:var(--ink2);letter-spacing:.4px;text-transform:uppercase;margin-bottom:.3rem;}
-.form-group input,.form-group select,.form-group textarea{width:100%;padding:.65rem .9rem;background:var(--bg2);border:1.5px solid var(--border2);border-radius:11px;font-family:'Cairo',sans-serif;font-size:1rem;color:var(--ink);outline:none;transition:border-color .2s;-webkit-appearance:none;}
-.form-group input:focus,.form-group select:focus{border-color:var(--gold);background:white;}
+.form-group label{display:block;font-size:.73rem;font-weight:700;color:var(--ink2);margin-bottom:.3rem;}
+.form-group input,.form-group select{width:100%;padding:.65rem .9rem;background:var(--bg2);border:1.5px solid var(--border2);border-radius:11px;font-family:'Cairo',sans-serif;font-size:1rem;color:var(--ink);outline:none;-webkit-appearance:none;}
+.form-group input:focus,.form-group select:focus{border-color:var(--gold);}
 .form-grid2{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;}
-
 .color-picker{display:flex;flex-wrap:wrap;gap:.45rem;margin-top:.3rem;}
-.cpick{display:flex;flex-direction:column;align-items:center;gap:.2rem;padding:.35rem .4rem;border-radius:9px;cursor:pointer;border:2px solid transparent;transition:all .15s;min-width:50px;font-size:.62rem;font-weight:600;color:var(--ink2);}
+.cpick{display:flex;flex-direction:column;align-items:center;gap:.2rem;padding:.35rem .4rem;border-radius:9px;cursor:pointer;border:2px solid transparent;min-width:50px;font-size:.62rem;font-weight:600;color:var(--ink2);}
 .cpick.active{border-color:var(--gold);background:var(--gold-light);}
 .cpick .cdot{width:22px;height:22px;border-radius:50%;border:2px solid rgba(0,0,0,.15);}
-.cpick:active{transform:scale(.9);}
-
-.qty-control{display:flex;align-items:center;gap:.75rem;}
-.qty-btn{width:44px;height:44px;border:none;background:var(--gold-light);border-radius:11px;font-size:1.3rem;font-weight:700;color:var(--gold);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;}
-.qty-btn:active{background:var(--gold);color:white;transform:scale(.92);}
-.qty-val{flex:1;text-align:center;font-size:1.5rem;font-weight:900;color:var(--ink);}
-
 .sheet-btns{display:flex;gap:.65rem;margin-top:1rem;}
-.sbtn{flex:1;padding:.75rem;border:none;border-radius:12px;font-family:'Cairo',sans-serif;font-size:.88rem;font-weight:700;cursor:pointer;transition:all .15s;}
-.sbtn:active{transform:scale(.96);}
+.sbtn{flex:1;padding:.75rem;border:none;border-radius:12px;font-family:'Cairo',sans-serif;font-size:.88rem;font-weight:700;cursor:pointer;}
 .sbtn-gold{background:linear-gradient(135deg,var(--gold),var(--gold2));color:white;}
 .sbtn-ghost{background:var(--bg2);color:var(--ink2);border:1px solid var(--border2);}
 .sbtn-danger{background:var(--rose);color:white;}
-
-/* Confirm sheet */
 .confirm-icon{font-size:2.5rem;text-align:center;margin:.5rem 0;}
 .confirm-msg{text-align:center;color:var(--ink2);font-size:.9rem;line-height:1.6;margin-bottom:1rem;}
-
-/* ══ TOAST ══ */
-.toast{
-  position:fixed;bottom:calc(var(--nav-h) + var(--safe-b) + .8rem);
-  left:50%;transform:translateX(-50%) translateY(20px);
-  background:var(--ink);color:white;
-  border-radius:25px;padding:.65rem 1.4rem;
-  font-size:.83rem;font-weight:600;
-  transition:all .3s ease;z-index:300;
-  box-shadow:0 6px 20px rgba(0,0,0,.3);
-  opacity:0;pointer-events:none;white-space:nowrap;
-}
+.toast{position:fixed;bottom:calc(var(--nav-h) + var(--safe-b) + .8rem);left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:white;border-radius:25px;padding:.65rem 1.4rem;font-size:.83rem;font-weight:600;transition:all .3s ease;z-index:900;opacity:0;pointer-events:none;white-space:nowrap;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 .toast.success{background:var(--teal);}
 .toast.error{background:var(--rose);}
@@ -367,82 +270,133 @@ body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--ink);displa
 </head>
 <body>
 
-<!-- Top Bar -->
-<div class="topbar">
-  <div class="topbar-brand">
-    <div class="topbar-icon">🧵</div>
-    <div>
-      <div class="topbar-title">ورشة الخياطة</div>
-      <div class="topbar-sub">سجل إنتاج الجبب</div>
-    </div>
+<div id="screen-loading">
+  <div class="loading-icon">🧵</div>
+  <div class="loading-text">ورشة الخياطة</div>
+  <div class="loading-sub">جاري الاتصال بالسحابة...</div>
+  <div class="loading-bar"><div class="loading-bar-fill"></div></div>
+</div>
+
+<div id="screen-home">
+  <div class="home-logo">
+    <div class="home-logo-icon">🧵</div>
+    <div class="home-logo-title">ورشة الخياطة</div>
+    <div class="home-logo-sub">اختاري اسمك لتسجيل إنتاجك</div>
   </div>
-  <div style="display:flex;gap:.4rem">
-    <button class="topbar-btn" onclick="exportXLSX()" title="تصدير Excel">📊</button>
+  <div class="home-section-label">👩 الموظفات</div>
+  <div class="worker-pick-grid" id="homeWorkerGrid"></div>
+  <div class="home-divider">
+    <div class="home-divider-line"></div>
+    <div class="home-divider-text">أو</div>
+    <div class="home-divider-line"></div>
+  </div>
+  <button class="admin-login-btn" onclick="openAdminLogin()">🔐 دخول المدير</button>
+</div>
+
+<div class="admin-pw-sheet" id="adminLoginSheet">
+  <div class="admin-pw-box">
+    <div class="apw-handle"></div>
+    <div class="apw-icon">🔐</div>
+    <div class="apw-title">دخول المدير</div>
+    <input class="apw-input" type="password" id="adminPw" placeholder="كلمة السر" autocomplete="off" onkeydown="if(event.key==='Enter')tryAdminLogin()">
+    <div class="apw-err" id="adminPwErr">❌ كلمة السر غير صحيحة</div>
+    <div class="apw-btns">
+      <button class="apw-cancel" onclick="closeAdminLogin()">إلغاء</button>
+      <button class="apw-submit" onclick="tryAdminLogin()">🔓 دخول</button>
+    </div>
   </div>
 </div>
 
-<!-- Scroll Area -->
-<div class="scroll-area" id="scrollArea">
-
-  <!-- ══ PAGE: Records ══ -->
-  <div class="page active" id="page-records">
-    <div id="miniStats"></div>
-    <div class="filter-scroll" id="filterBar"></div>
-    <div class="sec-header">
-      <div class="sec-title">🪡 سجلات الإنتاج</div>
-      <span class="sec-count" id="recCount">0</span>
+<div id="screen-workerApp">
+  <div class="worker-topbar">
+    <div class="wt-info">
+      <div class="wt-avatar" id="workerAvatar">؟</div>
+      <div>
+        <div class="wt-name" id="workerName">—</div>
+        <div class="wt-role">موظفة إنتاج</div>
+      </div>
     </div>
-    <div class="cards-list" id="cardsList"></div>
-    <div class="empty" id="emptyState" style="display:none">
-      <div class="empty-icon">🧵</div>
-      <p>لا توجد سجلات<br>اضغط + لإضافة أول سجل</p>
+    <div class="wt-stats">
+      <div class="wt-stat"><div class="wt-stat-val" id="workerTodayQty">0</div><div class="wt-stat-lbl">اليوم</div></div>
+      <div class="wt-stat"><div class="wt-stat-val" id="workerTotalQty">0</div><div class="wt-stat-lbl">الكل</div></div>
+      <button class="exit-btn" onclick="goHome()">← خروج</button>
     </div>
   </div>
-
-  <!-- ══ PAGE: Summary ══ -->
-  <div class="page" id="page-summary">
-    <div class="sec-header" style="padding-top:.85rem">
-      <div class="sec-title">📋 ملخص كل موظفة</div>
+  <div class="worker-scroll">
+    <div class="quick-add-card">
+      <div class="qac-header"><span>➕</span><div class="qac-header-title">تسجيل إنتاج جديد</div></div>
+      <div class="qac-body">
+        <div class="wform-grid2">
+          <div class="wform-group"><label>الموديل *</label><select id="wf_model"></select></div>
+          <div class="wform-group"><label>المقاس *</label>
+            <select id="wf_size"><option>M</option><option>L</option><option selected>XL</option><option>XXL</option><option>3XL</option></select>
+          </div>
+        </div>
+        <div class="wform-group"><label>التاريخ *</label><input type="date" id="wf_date"></div>
+        <div class="wform-group">
+          <label>العدد *</label>
+          <div class="qty-control">
+            <button class="qty-btn" onclick="changeWQty(-1)">−</button>
+            <div class="qty-val" id="wQtyDisplay">1</div>
+            <button class="qty-btn" onclick="changeWQty(1)">+</button>
+          </div>
+          <input type="hidden" id="wf_qty" value="1">
+        </div>
+        <div class="wform-group"><label>اللون *</label><div class="color-picker" id="wColorPicker"></div><input type="hidden" id="wf_color"></div>
+        <div class="wform-group"><label>ملاحظة</label><input type="text" id="wf_note" placeholder="اختياري..."></div>
+        <button class="worker-submit-btn" onclick="workerSave()">✅ حفظ الإنتاج</button>
+      </div>
     </div>
-    <div class="summary-page" id="summaryPage"></div>
-  </div>
-
-  <!-- ══ PAGE: Report ══ -->
-  <div class="page" id="page-report">
-    <div class="report-page" id="reportPage"></div>
-  </div>
-
-  <!-- ══ PAGE: Settings ══ -->
-  <div class="page" id="page-settings">
-    <div class="sec-header" style="padding-top:.85rem">
-      <div class="sec-title">⚙️ الإعدادات</div>
+    <div class="worker-recents-section">
+      <div class="wrs-title">🕐 آخر سجلاتك</div>
+      <div id="workerRecentsList"></div>
     </div>
-    <div class="settings-page" id="settingsPage"></div>
   </div>
-
 </div>
 
-<!-- FAB (only on records page) -->
-<button class="fab" id="fab" onclick="openAddRecord()">+</button>
+<div id="screen-adminApp">
+  <div class="admin-topbar">
+    <div class="at-brand">
+      <div class="at-icon">🧵</div>
+      <div><div class="at-title">ورشة الخياطة</div><div class="at-sub">لوحة المدير</div></div>
+    </div>
+    <div class="at-actions">
+      <span id="syncBadge" style="font-size:1rem">☁️</span>
+      <button class="topbar-btn" onclick="exportXLSX()">📊</button>
+      <button class="topbar-btn" onclick="adminLogout()">🚪</button>
+    </div>
+  </div>
+  <div class="admin-scroll" id="adminScroll" data-page="records">
+    <div class="apage active" id="apage-records">
+      <div id="adminMiniStats"></div>
+      <div class="filter-scroll" id="adminFilterBar"></div>
+      <div class="sec-header">
+        <div class="sec-title">🪡 سجلات الإنتاج</div>
+        <span class="sec-count" id="adminRecCount">0</span>
+      </div>
+      <div class="cards-list" id="adminCardsList"></div>
+      <div class="empty" id="adminEmptyState" style="display:none"><div class="empty-icon">🧵</div><p>لا توجد سجلات</p></div>
+    </div>
+    <div class="apage" id="apage-summary">
+      <div class="sec-header" style="padding-top:.85rem"><div class="sec-title">📋 ملخص كل موظفة</div></div>
+      <div class="summary-page" id="summaryPage"></div>
+    </div>
+    <div class="apage" id="apage-report"><div class="report-page" id="reportPage"></div></div>
+    <div class="apage" id="apage-settings">
+      <div class="sec-header" style="padding-top:.85rem"><div class="sec-title">⚙️ الإعدادات</div></div>
+      <div class="settings-page" id="settingsPage"></div>
+    </div>
+  </div>
+  <button class="fab" id="afab" onclick="openAddRecord()">+</button>
+  <nav class="bottom-nav">
+    <button class="anav-btn active" id="anav-records" onclick="showAdminPage('records')"><span class="nav-icon">🪡</span>السجلات</button>
+    <button class="anav-btn" id="anav-summary" onclick="showAdminPage('summary')"><span class="nav-icon">📋</span>الملخص</button>
+    <button class="anav-btn" id="anav-report" onclick="showAdminPage('report')"><span class="nav-icon">📅</span>التقرير</button>
+    <button class="anav-btn" id="anav-settings" onclick="showAdminPage('settings')"><span class="nav-icon">⚙️</span>الإعدادات</button>
+  </nav>
+</div>
 
-<!-- Bottom Nav -->
-<nav class="bottom-nav">
-  <button class="nav-btn active" id="nav-records" onclick="showPage('records')">
-    <span class="nav-icon">🪡</span>السجلات
-  </button>
-  <button class="nav-btn" id="nav-summary" onclick="showPage('summary')">
-    <span class="nav-icon">📋</span>الملخص
-  </button>
-  <button class="nav-btn" id="nav-report" onclick="showPage('report')">
-    <span class="nav-icon">📅</span>التقرير
-  </button>
-  <button class="nav-btn" id="nav-settings" onclick="showPage('settings')">
-    <span class="nav-icon">⚙️</span>الإعدادات
-  </button>
-</nav>
-
-<!-- Sheet: Add/Edit Record -->
-<div class="overlay" id="recordOverlay">
+<div class="overlay" id="recordOverlay" onclick="if(event.target===this)closeSheet('recordOverlay')">
   <div class="sheet">
     <div class="sheet-handle"></div>
     <div class="sheet-title" id="recordSheetTitle">➕ إضافة سجل إنتاج</div>
@@ -452,9 +406,7 @@ body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--ink);displa
         <div class="form-group"><label>الموديل *</label><select id="r_model"></select></div>
       </div>
       <div class="form-grid2">
-        <div class="form-group"><label>المقاس *</label>
-          <select id="r_size"><option>M</option><option>L</option><option selected>XL</option><option>XXL</option><option>3XL</option></select>
-        </div>
+        <div class="form-group"><label>المقاس *</label><select id="r_size"><option>M</option><option>L</option><option selected>XL</option><option>XXL</option><option>3XL</option></select></div>
         <div class="form-group"><label>التاريخ *</label><input type="date" id="r_date"></div>
       </div>
       <div class="form-group">
@@ -466,11 +418,7 @@ body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--ink);displa
         </div>
         <input type="hidden" id="r_qty" value="1">
       </div>
-      <div class="form-group">
-        <label>اللون *</label>
-        <div class="color-picker" id="colorPicker"></div>
-        <input type="hidden" id="r_color">
-      </div>
+      <div class="form-group"><label>اللون *</label><div class="color-picker" id="colorPicker"></div><input type="hidden" id="r_color"></div>
       <div class="form-group"><label>ملاحظة</label><input type="text" id="r_note" placeholder="اختياري..."></div>
       <div class="sheet-btns">
         <button class="sbtn sbtn-ghost" onclick="closeSheet('recordOverlay')">إلغاء</button>
@@ -480,14 +428,13 @@ body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--ink);displa
   </div>
 </div>
 
-<!-- Sheet: Delete Confirm -->
-<div class="overlay" id="deleteOverlay">
+<div class="overlay" id="deleteOverlay" onclick="if(event.target===this)closeSheet('deleteOverlay')">
   <div class="sheet">
     <div class="sheet-handle"></div>
     <div class="sheet-title" style="color:var(--rose)">🗑️ تأكيد الحذف</div>
     <div class="sheet-body">
       <div class="confirm-icon">⚠️</div>
-      <p class="confirm-msg">هل أنت متأكد من حذف هذا السجل؟<br><strong>لا يمكن التراجع عن هذه العملية.</strong></p>
+      <p class="confirm-msg">هل أنت متأكد من حذف هذا السجل؟<br><strong>لا يمكن التراجع.</strong></p>
       <div class="sheet-btns">
         <button class="sbtn sbtn-ghost" onclick="closeSheet('deleteOverlay')">إلغاء</button>
         <button class="sbtn sbtn-danger" onclick="confirmDelete()">🗑️ حذف</button>
@@ -499,164 +446,424 @@ body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--ink);displa
 <div class="toast" id="toast"></div>
 
 <script>
-// ── DATA ─────────────────────────────────────────────────────────────────
-let workers=['ناريمان','مينا','شاهيناز','سويكي'];
-let models=['كنفة','معينات','مربعات','غالون','كولفي'];
-let colors=[
+// ══════════════════════════════════════════════════════
+//  ⚙️ الإعدادات — غيّر هنا فقط
+// ══════════════════════════════════════════════════════
+var FIREBASE_CONFIG = {
+  apiKey:            "AIzaSyC_fQFMqg5-ZVL3oSdzDt-DQ_aDdfFmC60",
+  authDomain:        "workshop1-4f14a.firebaseapp.com",
+  projectId:         "workshop1-4f14a",
+  storageBucket:     "workshop1-4f14a.firebasestorage.app",
+  messagingSenderId: "175989367938",
+  appId:             "1:175989367938:web:8afdfbc19c1ac71d55809b"
+};
+var ADMIN_PASSWORD = "admin1234";
+// ══════════════════════════════════════════════════════
+
+var DEFAULT_WORKERS = ['ناريمان','مينا','شاهيناز','سويكي'];
+var DEFAULT_MODELS  = ['كنفة','معينات','مربعات','غالون','كولفي'];
+var DEFAULT_COLORS  = [
   {name:'احمر',hex:'#c0392b'},{name:'موف',hex:'#9b59b6'},{name:'ميلكا',hex:'#d7bde2'},
   {name:'زيتي',hex:'#6b8e23'},{name:'بلونوي',hex:'#5dade2'},{name:'غرونا',hex:'#8e1515'},
   {name:'بيستاش',hex:'#a8d8a8'},{name:'فيردو',hex:'#27ae60'},{name:'تركواز',hex:'#1abc9c'},
-  {name:'بيج',hex:'#d4b896'},{name:'زهر',hex:'#f1948a'},{name:'ازرق',hex:'#2980b9'},
+  {name:'بيج',hex:'#d4b896'},{name:'زهر',hex:'#f1948a'},{name:'ازرق',hex:'#2980b9'}
 ];
-const AM=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
-const AD=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
-const MC=['#b8892a','#1a6b5c','#8b2a3a','#1a4a8b','#5a2a8b','#2c7a5c','#7a5c2c','#5c2c7a'];
+var AM=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+var AD=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+var MC=['#b8892a','#1a6b5c','#8b2a3a','#1a4a8b','#5a2a8b','#2c7a5c','#7a5c2c','#5c2c7a'];
 
-let records=[],nextId=1,editingId=null,deletingId=null,selColor='',filtW='',filtM='',filtC='',filtS='';
-let rYear=new Date().getFullYear(),rMonth=new Date().getMonth();
-const today=new Date().toISOString().split('T')[0];
-let curQty=1;
+var workers=[], models=[], colors=[], records=[];
+var isAdmin=false, currentWorker=null;
+var editingId=null, deletingId=null, selColor='', wSelColor='';
+var filtW='',filtM='',filtC='',filtS='';
+var rYear=new Date().getFullYear(), rMonth=new Date().getMonth();
+var curQty=1, wCurQty=1;
+var TODAY = new Date().toISOString().split('T')[0];
+var db = null;
 
-// Seed
-(function(){
-  const now=new Date();
-  const push=(y,m,day,w,mod,sz,col,qty)=>{
-    const d=new Date(y,m,day);if(d.getDay()===5)return;
-    records.push({id:nextId++,worker:w,model:mod,size:sz,color:col,qty,note:'',
-      date:`${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`});
-  };
-  for(let i=0;i<28;i++) push(now.getFullYear(),now.getMonth(),Math.min(i+1,27),workers[i%4],models[i%5],['M','L','XL','XXL','3XL'][i%5],colors[i%12].name,Math.floor(Math.random()*9)+2);
-  for(let i=0;i<20;i++){const lm=now.getMonth()-1<0?11:now.getMonth()-1,ly=now.getMonth()-1<0?now.getFullYear()-1:now.getFullYear();push(ly,lm,Math.min(i+1,27),workers[(i+1)%4],models[(i+2)%5],['XL','XXL','L','M','3XL'][i%5],colors[(i+4)%12].name,Math.floor(Math.random()*8)+1);}
-  for(let i=0;i<12;i++){let lm=now.getMonth()-2,ly=now.getFullYear();if(lm<0){lm+=12;ly--;}push(ly,lm,Math.min(i+1,25),workers[(i+2)%4],models[(i+1)%5],['L','XL','XXL','M','3XL'][i%5],colors[(i+7)%12].name,Math.floor(Math.random()*7)+1);}
-})();
-
-// ── NAV ───────────────────────────────────────────────────────────────────
-function showPage(n){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('page-'+n).classList.add('active');
-  document.getElementById('nav-'+n).classList.add('active');
-  document.getElementById('fab').style.display=n==='records'?'flex':'none';
-  document.getElementById('scrollArea').scrollTop=0;
-  if(n==='summary')renderSummary();
-  if(n==='report')renderReport();
-  if(n==='settings')renderSettings();
+// ── Screens ──────────────────────────────────────────
+function setScreen(name) {
+  ['loading','home','workerApp','adminApp'].forEach(function(s){
+    var el = document.getElementById('screen-'+s);
+    if(el){ el.style.display='none'; el.style.flexDirection=''; }
+  });
+  var t = document.getElementById('screen-'+name);
+  if(t){
+    t.style.display='flex';
+    t.style.flexDirection='column';
+    if(name==='home') t.style.flexDirection='column';
+  }
 }
 
-// ── HELPERS ───────────────────────────────────────────────────────────────
-function gch(n){return(colors.find(c=>c.name===n)||{}).hex||'#aaa';}
-function gmr(y,m){const p=`${y}-${String(m+1).padStart(2,'0')}`;return records.filter(r=>r.date.startsWith(p));}
-function closeSheet(id){document.getElementById(id).classList.remove('show');}
-function changeQty(d){curQty=Math.max(1,curQty+d);document.getElementById('qtyDisplay').textContent=curQty;document.getElementById('r_qty').value=curQty;}
+// ── Toast ─────────────────────────────────────────────
+function toast(msg, type) {
+  var t=document.getElementById('toast');
+  t.textContent=msg;
+  t.className='toast '+(type||'info')+' show';
+  setTimeout(function(){t.classList.remove('show');},3000);
+}
 
-// ── RECORDS ───────────────────────────────────────────────────────────────
-function applyFilters(){
-  let fr=records;
-  if(filtW) fr=fr.filter(r=>r.worker===filtW);
-  if(filtM) fr=fr.filter(r=>r.model===filtM);
-  if(filtC) fr=fr.filter(r=>r.color===filtC);
-  if(filtS) fr=fr.filter(r=>r.size===filtS);
-  renderCards(fr);
+// ── Sync badge ────────────────────────────────────────
+function syncBadge(state) {
+  var el=document.getElementById('syncBadge');
+  if(!el) return;
+  var map={ok:'☁️',syncing:'⏳',err:'⚠️'};
+  el.textContent = map[state]||'☁️';
+}
+
+// ── INIT ─────────────────────────────────────────────
+function initApp() {
+  workers = DEFAULT_WORKERS.slice();
+  models  = DEFAULT_MODELS.slice();
+  colors  = DEFAULT_COLORS.map(function(c){return {name:c.name,hex:c.hex};});
+
+  setScreen('loading');
+
+  // Timeout fallback — يفتح التطبيق بعد 8 ثوانٍ حتى لو Firebase بطيء
+  var tid = setTimeout(function(){
+    toast('تعذّر الاتصال — وضع محلي مؤقت','error');
+    var savedSession = localStorage.getItem('ws_session');
+    var savedWorker  = localStorage.getItem('ws_worker');
+    if(savedSession === 'admin') {
+      isAdmin=true; setScreen('adminApp'); showAdminPage('records'); refreshAdmin();
+    } else if(savedSession === 'worker' && savedWorker) {
+      enterWorker(savedWorker);
+    } else {
+      setScreen('home'); renderHome();
+    }
+  }, 8000);
+
+  try {
+    firebase.initializeApp(FIREBASE_CONFIG);
+    db = firebase.firestore();
+
+    // Test connection
+    db.collection('settings').doc('workshop_config').get()
+      .then(function(snap){
+        clearTimeout(tid);
+        if(!snap.exists){
+          return db.collection('settings').doc('workshop_config').set({
+            workers: DEFAULT_WORKERS, models: DEFAULT_MODELS, colors: DEFAULT_COLORS
+          });
+        } else {
+          var d = snap.data();
+          workers = d.workers || DEFAULT_WORKERS.slice();
+          models  = d.models  || DEFAULT_MODELS.slice();
+          colors  = d.colors  || DEFAULT_COLORS.map(function(c){return {name:c.name,hex:c.hex};});
+        }
+      })
+      .then(function(){
+        // Live listeners
+        db.collection('settings').doc('workshop_config').onSnapshot(function(snap){
+          if(!snap.exists) return;
+          var d=snap.data();
+          workers=d.workers||[]; models=d.models||[]; colors=d.colors||[];
+          if(isAdmin) refreshAdmin(); else renderHome();
+        });
+        db.collection('records').onSnapshot(function(snap){
+          records = snap.docs.map(function(d){ return Object.assign({id:d.id},d.data()); });
+          records.sort(function(a,b){ return b.date.localeCompare(a.date); });
+          syncBadge('ok');
+          if(isAdmin) refreshAdmin();
+          else if(currentWorker) renderWorkerRecents();
+        });
+        // ── استعادة الجلسة المحفوظة ──
+        var savedSession = localStorage.getItem('ws_session');
+        var savedWorker  = localStorage.getItem('ws_worker');
+        if(savedSession === 'admin') {
+          isAdmin=true; currentWorker=null;
+          setScreen('adminApp');
+          showAdminPage('records');
+          refreshAdmin();
+          syncBadge('ok');
+        } else if(savedSession === 'worker' && savedWorker) {
+          enterWorker(savedWorker);
+        } else {
+          setScreen('home');
+          renderHome();
+        }
+      })
+      .catch(function(e){
+        clearTimeout(tid);
+        console.error('Firestore error:',e);
+        toast('خطأ Firebase: '+e.code,'error');
+        setScreen('home');
+        renderHome();
+      });
+  } catch(e) {
+    clearTimeout(tid);
+    console.error('Init error:',e);
+    toast('خطأ في التهيئة','error');
+    setScreen('home');
+    renderHome();
+  }
+}
+
+// ── Home ─────────────────────────────────────────────
+function renderHome() {
+  var g = document.getElementById('homeWorkerGrid');
+  if(!g) return;
+  g.innerHTML = workers.map(function(w){
+    return '<button class="worker-pick-btn" onclick="enterWorker(\''+w+'\')">'+
+      '<div class="wpb-avatar">'+w.charAt(0)+'</div>'+
+      '<div class="wpb-name">'+w+'</div></button>';
+  }).join('');
+}
+
+function openAdminLogin() {
+  document.getElementById('adminLoginSheet').classList.add('show');
+  setTimeout(function(){document.getElementById('adminPw').focus();},200);
+}
+function closeAdminLogin() {
+  document.getElementById('adminLoginSheet').classList.remove('show');
+  document.getElementById('adminPw').value='';
+}
+function tryAdminLogin() {
+  var pw = document.getElementById('adminPw').value;
+  if(pw === ADMIN_PASSWORD) {
+    isAdmin=true; currentWorker=null;
+    localStorage.setItem('ws_session','admin');
+    closeAdminLogin();
+    setScreen('adminApp');
+    showAdminPage('records');
+    refreshAdmin();
+    syncBadge('ok');
+  } else {
+    var err = document.getElementById('adminPwErr');
+    err.style.display='block';
+    document.getElementById('adminPw').value='';
+    setTimeout(function(){err.style.display='none';},2500);
+  }
+}
+function adminLogout() {
+  isAdmin=false;
+  localStorage.removeItem('ws_session');
+  localStorage.removeItem('ws_worker');
+  setScreen('home');
+  renderHome();
+}
+function goHome() {
+  currentWorker=null; isAdmin=false;
+  localStorage.removeItem('ws_session');
+  localStorage.removeItem('ws_worker');
+  setScreen('home');
+  renderHome();
+}
+
+// ── Worker App ───────────────────────────────────────
+function enterWorker(name) {
+  currentWorker=name;
+  isAdmin=false;
+  localStorage.setItem('ws_session','worker');
+  localStorage.setItem('ws_worker', name);
+  document.getElementById('workerAvatar').textContent=name.charAt(0);
+  document.getElementById('workerName').textContent=name;
+  setScreen('workerApp');
+  renderWorkerHeader();
+  renderWorkerForm();
+  renderWorkerRecents();
+}
+
+function renderWorkerHeader() {
+  var tr=records.filter(function(r){return r.worker===currentWorker&&r.date===TODAY;});
+  var todayQ=tr.reduce(function(s,r){return s+r.qty;},0);
+  var totalQ=records.filter(function(r){return r.worker===currentWorker;}).reduce(function(s,r){return s+r.qty;},0);
+  document.getElementById('workerTodayQty').textContent=todayQ;
+  document.getElementById('workerTotalQty').textContent=totalQ;
+}
+
+function renderWorkerForm() {
+  var wm=document.getElementById('wf_model');
+  if(wm) wm.innerHTML=models.map(function(m){return '<option>'+m+'</option>';}).join('');
+  var wd=document.getElementById('wf_date');
+  if(wd) wd.value=TODAY;
+  wCurQty=1;
+  document.getElementById('wQtyDisplay').textContent='1';
+  document.getElementById('wf_qty').value='1';
+  document.getElementById('wf_note').value='';
+  buildWColorPicker();
+}
+
+function buildWColorPicker() {
+  wSelColor='';
+  document.getElementById('wColorPicker').innerHTML=colors.map(function(c){
+    return '<div class="cpick" onclick="wPickColor(\''+c.name+'\')" id="wcp_'+c.name+'">'+
+      '<div class="cdot" style="background:'+c.hex+'"></div><span>'+c.name+'</span></div>';
+  }).join('');
+  document.getElementById('wf_color').value='';
+}
+
+function wPickColor(n) {
+  wSelColor=n;
+  document.getElementById('wf_color').value=n;
+  document.querySelectorAll('#wColorPicker .cpick').forEach(function(el){el.classList.remove('active');});
+  var el=document.getElementById('wcp_'+n);
+  if(el) el.classList.add('active');
+}
+
+function changeWQty(d) {
+  wCurQty=Math.max(1,wCurQty+d);
+  document.getElementById('wQtyDisplay').textContent=wCurQty;
+  document.getElementById('wf_qty').value=wCurQty;
+}
+
+function workerSave() {
+  var m=document.getElementById('wf_model').value;
+  var s=document.getElementById('wf_size').value;
+  var q=parseInt(document.getElementById('wf_qty').value)||0;
+  var d=document.getElementById('wf_date').value;
+  var n=document.getElementById('wf_note').value.trim();
+  var c=document.getElementById('wf_color').value||wSelColor;
+  if(!m||!s||q<1||!d||!c){toast('يرجى تعبئة جميع الحقول واختيار لون','error');return;}
+
+  if(!db) {
+    records.unshift({id:'L'+Date.now(),worker:currentWorker,model:m,size:s,color:c,qty:q,date:d,note:n});
+    toast('تم تسجيل '+q+' جبة ✓ (محلي)','success');
+    renderWorkerForm(); renderWorkerHeader(); renderWorkerRecents();
+    return;
+  }
+  syncBadge('syncing');
+  db.collection('records').add({worker:currentWorker,model:m,size:s,color:c,qty:q,date:d,note:n,createdAt:Date.now()})
+    .then(function(){
+      toast('تم تسجيل '+q+' جبة ✓','success');
+      renderWorkerForm(); renderWorkerHeader(); renderWorkerRecents();
+      syncBadge('ok');
+    }).catch(function(e){
+      toast('خطأ في الحفظ — تحقق من الإنترنت','error');
+      syncBadge('err');
+    });
+}
+
+function renderWorkerRecents() {
+  var el=document.getElementById('workerRecentsList');
+  if(!el||!currentWorker) return;
+  var myR=records.filter(function(r){return r.worker===currentWorker;}).slice(0,10);
+  if(!myR.length){el.innerHTML='<div style="text-align:center;padding:1.5rem;color:var(--ink3)">لا توجد سجلات بعد</div>';return;}
+  el.innerHTML=myR.map(function(r){
+    var hex=gch(r.color);
+    return '<div class="wrec-card">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center">'+
+      '<div><div class="wrec-date">'+r.date+'</div>'+
+      '<div class="wrec-tags">'+
+      '<span class="tag tag-model">👗 '+r.model+'</span>'+
+      '<span class="tag tag-size">📐 '+r.size+'</span>'+
+      '<span class="tag tag-color" style="background:'+hex+'22;color:'+hex+';border:1px solid '+hex+'44">'+
+      '<span class="cdot-sm" style="background:'+hex+'"></span>'+r.color+'</span></div>'+
+      (r.note?'<div style="font-size:.7rem;color:var(--ink3);margin-top:.25rem">📝 '+r.note+'</div>':'')+'</div>'+
+      '<div style="text-align:center;min-width:44px"><div style="font-size:1.5rem;font-weight:900;color:var(--teal)">'+r.qty+'</div><div style="font-size:.6rem;color:var(--ink3)">جبة</div></div>'+
+      '</div></div>';
+  }).join('');
+  renderWorkerHeader();
+}
+
+// ── Admin App ─────────────────────────────────────────
+function showAdminPage(n) {
+  document.querySelectorAll('.apage').forEach(function(p){p.classList.remove('active');});
+  document.querySelectorAll('.anav-btn').forEach(function(b){b.classList.remove('active');});
+  document.getElementById('apage-'+n).classList.add('active');
+  document.getElementById('anav-'+n).classList.add('active');
+  document.getElementById('afab').style.display=n==='records'?'flex':'none';
+  document.getElementById('adminScroll').dataset.page=n;
+  document.getElementById('adminScroll').scrollTop=0;
+  if(n==='summary') renderSummary();
+  if(n==='report')  renderReport();
+  if(n==='settings') renderSettings();
+}
+
+function refreshAdmin() {
+  var cur=document.getElementById('adminScroll').dataset.page||'records';
+  renderAdminFilterBar();
+  applyFilters();
+  if(cur==='summary') renderSummary();
+  if(cur==='report')  renderReport();
+  if(cur==='settings') renderSettings();
+}
+
+function applyFilters() {
+  var fr=records.filter(function(r){
+    return (!filtW||r.worker===filtW)&&(!filtM||r.model===filtM)&&(!filtC||r.color===filtC)&&(!filtS||r.size===filtS);
+  });
+  renderAdminCards(fr);
   renderMiniStats(fr);
 }
 
-function renderMiniStats(fr){
-  const total=fr.reduce((s,r)=>s+r.qty,0);
-  const wm={};fr.forEach(r=>wm[r.worker]=(wm[r.worker]||0)+r.qty);
-  const best=Object.entries(wm).sort((a,b)=>b[1]-a[1])[0];
-  document.getElementById('miniStats').innerHTML=`<div class="mini-stats">
-    <div class="mini-stat"><div class="mini-stat-icon">🧵</div><div><div class="mini-stat-val">${total}</div><div class="mini-stat-lbl">إجمالي الجبب</div></div></div>
-    <div class="mini-stat"><div class="mini-stat-icon">📋</div><div><div class="mini-stat-val">${fr.length}</div><div class="mini-stat-lbl">السجلات</div></div></div>
-    <div class="mini-stat"><div class="mini-stat-icon">👩</div><div><div class="mini-stat-val">${new Set(fr.map(r=>r.worker)).size}</div><div class="mini-stat-lbl">موظفات</div></div></div>
-    ${best?`<div class="mini-stat" style="border-color:var(--gold2)"><div class="mini-stat-icon">🏆</div><div><div class="mini-stat-val" style="color:var(--gold);font-size:.88rem">${best[0]}</div><div class="mini-stat-lbl">${best[1]} جبة</div></div></div>`:''}
-  </div>`;
+function renderMiniStats(fr) {
+  var total=fr.reduce(function(s,r){return s+r.qty;},0);
+  var wm={};fr.forEach(function(r){wm[r.worker]=(wm[r.worker]||0)+r.qty;});
+  var best=Object.entries(wm).sort(function(a,b){return b[1]-a[1];})[0];
+  document.getElementById('adminMiniStats').innerHTML='<div class="mini-stats">'+
+    '<div class="mini-stat"><div class="mini-stat-icon">🧵</div><div><div class="mini-stat-val">'+total+'</div><div class="mini-stat-lbl">إجمالي الجبب</div></div></div>'+
+    '<div class="mini-stat"><div class="mini-stat-icon">📋</div><div><div class="mini-stat-val">'+fr.length+'</div><div class="mini-stat-lbl">السجلات</div></div></div>'+
+    '<div class="mini-stat"><div class="mini-stat-icon">👩</div><div><div class="mini-stat-val">'+new Set(fr.map(function(r){return r.worker;})).size+'</div><div class="mini-stat-lbl">موظفات</div></div></div>'+
+    (best?'<div class="mini-stat" style="border-color:var(--gold2)"><div class="mini-stat-icon">🏆</div><div><div class="mini-stat-val" style="color:var(--gold);font-size:.85rem">'+best[0]+'</div><div class="mini-stat-lbl">'+best[1]+' جبة</div></div></div>':'')+'</div>';
 }
 
-function renderFilterBar(){
-  document.getElementById('filterBar').innerHTML=`
-    <div class="filter-chip${filtW?' active-filter':''}">
-      👩 <select onchange="filtW=this.value;applyFilters()" style="max-width:70px">
-        <option value="">الكل</option>${workers.map(w=>`<option${w===filtW?' selected':''}>${w}</option>`).join('')}
-      </select>
-    </div>
-    <div class="filter-chip${filtM?' active-filter':''}">
-      👗 <select onchange="filtM=this.value;applyFilters()" style="max-width:65px">
-        <option value="">الكل</option>${models.map(m=>`<option${m===filtM?' selected':''}>${m}</option>`).join('')}
-      </select>
-    </div>
-    <div class="filter-chip${filtS?' active-filter':''}">
-      📐 <select onchange="filtS=this.value;applyFilters()" style="max-width:55px">
-        <option value="">الكل</option>
-        ${['M','L','XL','XXL','3XL'].map(s=>`<option${s===filtS?' selected':''}>${s}</option>`).join('')}
-      </select>
-    </div>
-    <div class="filter-chip${filtC?' active-filter':''}">
-      🎨 <select onchange="filtC=this.value;applyFilters()" style="max-width:65px">
-        <option value="">الكل</option>${colors.map(c=>`<option value="${c.name}"${c.name===filtC?' selected':''}>${c.name}</option>`).join('')}
-      </select>
-    </div>
-    <div class="filter-chip" onclick="filtW='';filtM='';filtS='';filtC='';applyFilters();renderFilterBar()">✕ مسح</div>`;
+function renderAdminFilterBar() {
+  document.getElementById('adminFilterBar').innerHTML=
+    '<div class="filter-chip'+(filtW?' active-filter':'')+'">👩 <select onchange="filtW=this.value;applyFilters()" style="max-width:70px"><option value="">الكل</option>'+workers.map(function(w){return '<option'+(w===filtW?' selected':'')+'>'+w+'</option>';}).join('')+'</select></div>'+
+    '<div class="filter-chip'+(filtM?' active-filter':'')+'">👗 <select onchange="filtM=this.value;applyFilters()" style="max-width:65px"><option value="">الكل</option>'+models.map(function(m){return '<option'+(m===filtM?' selected':'')+'>'+m+'</option>';}).join('')+'</select></div>'+
+    '<div class="filter-chip'+(filtS?' active-filter':'')+'">📐 <select onchange="filtS=this.value;applyFilters()" style="max-width:55px"><option value="">الكل</option>'+['M','L','XL','XXL','3XL'].map(function(s){return '<option'+(s===filtS?' selected':'')+'>'+s+'</option>';}).join('')+'</select></div>'+
+    '<div class="filter-chip'+(filtC?' active-filter':'')+'">🎨 <select onchange="filtC=this.value;applyFilters()" style="max-width:65px"><option value="">الكل</option>'+colors.map(function(c){return '<option value="'+c.name+'"'+(c.name===filtC?' selected':'')+'>'+c.name+'</option>';}).join('')+'</select></div>'+
+    '<div class="filter-chip" onclick="filtW=\'\';filtM=\'\';filtS=\'\';filtC=\'\';applyFilters();renderAdminFilterBar()">✕ مسح</div>';
 }
 
-function renderCards(fr){
-  const el=document.getElementById('cardsList'),em=document.getElementById('emptyState');
-  document.getElementById('recCount').textContent=fr.length;
+function renderAdminCards(fr) {
+  var el=document.getElementById('adminCardsList'),em=document.getElementById('adminEmptyState');
+  document.getElementById('adminRecCount').textContent=fr.length;
   if(!fr.length){el.innerHTML='';em.style.display='block';return;}
   em.style.display='none';
-  el.innerHTML=[...fr].reverse().map(r=>{
-    const hex=gch(r.color);
-    return `<div class="rec-card">
-      <div class="rec-card-top">
-        <div class="rec-worker">
-          <div class="worker-avatar">${r.worker.charAt(0)}</div>
-          <div><div class="worker-name">${r.worker}</div><div class="worker-date">${r.date}</div></div>
-        </div>
-        <div style="text-align:center"><div class="rec-qty">${r.qty}</div><div class="rec-qty-lbl">جبة</div></div>
-      </div>
-      <div class="rec-card-tags">
-        <span class="tag tag-model">👗 ${r.model}</span>
-        <span class="tag tag-size">📐 ${r.size}</span>
-        <span class="tag tag-color" style="background:${hex}22;color:${hex};border-color:${hex}44">
-          <span class="cdot-sm" style="background:${hex}"></span>${r.color}</span>
-      </div>
-      ${r.note?`<div class="rec-note">📝 ${r.note}</div>`:''}
-      <div class="rec-actions">
-        <button class="act-btn act-edit" onclick="openEditRecord(${r.id})">✏️ تعديل</button>
-        <button class="act-btn act-del" onclick="openDelete(${r.id})">🗑️ حذف</button>
-      </div>
-    </div>`;}).join('');
+  el.innerHTML=fr.map(function(r){
+    var hex=gch(r.color);
+    return '<div class="rec-card">'+
+      '<div class="rec-card-top"><div class="rec-worker">'+
+      '<div class="worker-avatar">'+(r.worker||'؟').charAt(0)+'</div>'+
+      '<div><div class="worker-name">'+(r.worker||'—')+'</div><div class="worker-date">'+(r.date||'')+'</div></div></div>'+
+      '<div style="text-align:center"><div class="rec-qty">'+r.qty+'</div><div class="rec-qty-lbl">جبة</div></div></div>'+
+      '<div class="rec-card-tags">'+
+      '<span class="tag tag-model">👗 '+r.model+'</span>'+
+      '<span class="tag tag-size">📐 '+r.size+'</span>'+
+      '<span class="tag tag-color" style="background:'+hex+'22;color:'+hex+';border:1px solid '+hex+'44">'+
+      '<span class="cdot-sm" style="background:'+hex+'"></span>'+r.color+'</span></div>'+
+      (r.note?'<div class="rec-note">📝 '+r.note+'</div>':'')+
+      '<div class="rec-actions">'+
+      '<button class="act-btn act-edit" onclick="openEdit(\''+r.id+'\')">✏️ تعديل</button>'+
+      '<button class="act-btn act-del" onclick="openDel(\''+r.id+'\')">🗑️ حذف</button>'+
+      '</div></div>';
+  }).join('');
 }
 
-// ── RECORD CRUD ───────────────────────────────────────────────────────────
+// Admin record form
 function buildColorPicker(){
-  document.getElementById('colorPicker').innerHTML=colors.map(c=>`
-    <div class="cpick${selColor===c.name?' active':''}" onclick="pickColor('${c.name}')" id="cp_${c.name}">
-      <div class="cdot" style="background:${c.hex}"></div><span>${c.name}</span></div>`).join('');
+  document.getElementById('colorPicker').innerHTML=colors.map(function(c){
+    return '<div class="cpick'+(selColor===c.name?' active':'')+'" onclick="pickColor(\''+c.name+'\')" id="cp_'+c.name+'">'+
+      '<div class="cdot" style="background:'+c.hex+'"></div><span>'+c.name+'</span></div>';
+  }).join('');
 }
 function pickColor(n){
-  selColor=n;document.getElementById('r_color').value=n;
-  document.querySelectorAll('.cpick').forEach(el=>el.classList.remove('active'));
-  const el=document.getElementById('cp_'+n);if(el)el.classList.add('active');
+  selColor=n; document.getElementById('r_color').value=n;
+  document.querySelectorAll('#colorPicker .cpick').forEach(function(el){el.classList.remove('active');});
+  var el=document.getElementById('cp_'+n); if(el) el.classList.add('active');
 }
-function populateForm(){
-  document.getElementById('r_worker').innerHTML=workers.map(w=>`<option>${w}</option>`).join('');
-  document.getElementById('r_model').innerHTML=models.map(m=>`<option>${m}</option>`).join('');
-}
+function changeQty(d){curQty=Math.max(1,curQty+d);document.getElementById('qtyDisplay').textContent=curQty;document.getElementById('r_qty').value=curQty;}
+
 function openAddRecord(){
-  editingId=null;selColor='';curQty=1;
+  editingId=null; selColor=''; curQty=1;
   document.getElementById('recordSheetTitle').textContent='➕ إضافة سجل إنتاج';
-  document.getElementById('r_date').value=today;
+  document.getElementById('r_date').value=TODAY;
   document.getElementById('qtyDisplay').textContent='1';
   document.getElementById('r_qty').value='1';
   document.getElementById('r_note').value='';
-  populateForm();buildColorPicker();
+  document.getElementById('r_worker').innerHTML=workers.map(function(w){return '<option>'+w+'</option>';}).join('');
+  document.getElementById('r_model').innerHTML=models.map(function(m){return '<option>'+m+'</option>';}).join('');
+  buildColorPicker();
   document.getElementById('recordOverlay').classList.add('show');
 }
-function openEditRecord(id){
-  const rec=records.find(r=>r.id===id);if(!rec)return;
-  editingId=id;selColor=rec.color;curQty=rec.qty;
+function openEdit(id){
+  var rec=records.find(function(r){return r.id===id;}); if(!rec) return;
+  editingId=id; selColor=rec.color; curQty=rec.qty;
   document.getElementById('recordSheetTitle').textContent='✏️ تعديل السجل';
-  populateForm();
+  document.getElementById('r_worker').innerHTML=workers.map(function(w){return '<option>'+w+'</option>';}).join('');
+  document.getElementById('r_model').innerHTML=models.map(function(m){return '<option>'+m+'</option>';}).join('');
   document.getElementById('r_worker').value=rec.worker;
   document.getElementById('r_model').value=rec.model;
   document.getElementById('r_size').value=rec.size;
@@ -667,254 +874,282 @@ function openEditRecord(id){
   buildColorPicker();
   document.getElementById('recordOverlay').classList.add('show');
 }
+function openDel(id){ deletingId=id; document.getElementById('deleteOverlay').classList.add('show'); }
+function closeSheet(id){ document.getElementById(id).classList.remove('show'); }
+
 function saveRecord(){
-  const w=document.getElementById('r_worker').value,m=document.getElementById('r_model').value,
+  var w=document.getElementById('r_worker').value,m=document.getElementById('r_model').value,
     s=document.getElementById('r_size').value,q=parseInt(document.getElementById('r_qty').value)||0,
     d=document.getElementById('r_date').value,n=document.getElementById('r_note').value.trim(),
     c=document.getElementById('r_color').value||selColor;
-  if(!w||!m||!s||q<1||!d||!c){showToast('يرجى تعبئة جميع الحقول واختيار لون','error');return;}
-  if(editingId){const i=records.findIndex(r=>r.id===editingId);if(i>-1)records[i]={id:editingId,worker:w,model:m,size:s,color:c,qty:q,date:d,note:n};showToast('تم تعديل السجل ✓','success');}
-  else{records.push({id:nextId++,worker:w,model:m,size:s,color:c,qty:q,date:d,note:n});showToast('تم إضافة السجل ✓','success');}
-  closeSheet('recordOverlay');renderFilterBar();applyFilters();
+  if(!w||!m||!s||q<1||!d||!c){toast('يرجى تعبئة جميع الحقول واختيار لون','error');return;}
+  if(!db){
+    if(editingId){var i=records.findIndex(function(r){return r.id===editingId;});if(i>-1)records[i]={id:editingId,worker:w,model:m,size:s,color:c,qty:q,date:d,note:n};}
+    else records.unshift({id:'L'+Date.now(),worker:w,model:m,size:s,color:c,qty:q,date:d,note:n});
+    closeSheet('recordOverlay'); refreshAdmin(); toast('تم الحفظ (محلي)','success'); return;
+  }
+  syncBadge('syncing');
+  var p = editingId ?
+    db.collection('records').doc(editingId).update({worker:w,model:m,size:s,color:c,qty:q,date:d,note:n}) :
+    db.collection('records').add({worker:w,model:m,size:s,color:c,qty:q,date:d,note:n,createdAt:Date.now()});
+  p.then(function(){closeSheet('recordOverlay');toast(editingId?'تم التعديل ✓':'تم الإضافة ✓','success');syncBadge('ok');})
+   .catch(function(){toast('خطأ في الحفظ','error');syncBadge('err');});
 }
-function openDelete(id){deletingId=id;document.getElementById('deleteOverlay').classList.add('show');}
-function confirmDelete(){records=records.filter(r=>r.id!==deletingId);closeSheet('deleteOverlay');applyFilters();showToast('تم حذف السجل','info');}
 
-// ── SUMMARY ───────────────────────────────────────────────────────────────
+function confirmDelete(){
+  if(!deletingId) return;
+  if(!db){records=records.filter(function(r){return r.id!==deletingId;});closeSheet('deleteOverlay');refreshAdmin();toast('تم الحذف','info');return;}
+  syncBadge('syncing');
+  db.collection('records').doc(deletingId).delete()
+    .then(function(){closeSheet('deleteOverlay');toast('تم الحذف','info');syncBadge('ok');})
+    .catch(function(){toast('خطأ في الحذف','error');syncBadge('err');});
+}
+
+// Settings CRUD
+function saveSettings(){
+  if(!db) return;
+  db.collection('settings').doc('workshop_config').set({workers:workers,models:models,colors:colors})
+    .catch(function(){toast('خطأ في حفظ الإعدادات','error');});
+}
+function addWorker(){
+  var n=document.getElementById('new_worker').value.trim();
+  if(!n){toast('أدخلي الاسم','error');return;}
+  if(workers.indexOf(n)>-1){toast('موجودة مسبقاً','error');return;}
+  workers.push(n); saveSettings(); document.getElementById('new_worker').value=''; renderSettings(); toast('تمت الإضافة ✓','success');
+}
+function removeWorker(n){workers=workers.filter(function(w){return w!==n;});saveSettings();renderSettings();toast('تم الحذف','info');}
+function addModel(){
+  var n=document.getElementById('new_model').value.trim();
+  if(!n){toast('أدخل الموديل','error');return;}
+  if(models.indexOf(n)>-1){toast('موجود مسبقاً','error');return;}
+  models.push(n); saveSettings(); document.getElementById('new_model').value=''; renderSettings(); toast('تمت الإضافة ✓','success');
+}
+function removeModel(n){models=models.filter(function(m){return m!==n;});saveSettings();renderSettings();toast('تم الحذف','info');}
+function addColor(){
+  var n=document.getElementById('new_color_name').value.trim(),h=document.getElementById('new_color_hex').value;
+  if(!n){toast('أدخل اسم اللون','error');return;}
+  if(colors.find(function(c){return c.name===n;})){toast('موجود مسبقاً','error');return;}
+  colors.push({name:n,hex:h}); saveSettings(); document.getElementById('new_color_name').value=''; renderSettings(); toast('تمت الإضافة ✓','success');
+}
+function removeColor(n){colors=colors.filter(function(c){return c.name!==n;});saveSettings();renderSettings();toast('تم الحذف','info');}
+
+// ── Summary ───────────────────────────────────────────
 function renderSummary(){
-  const am=[...new Set([...models,...records.map(r=>r.model)])];
-  const wt={};workers.forEach(w=>{wt[w]={total:0};am.forEach(m=>wt[w][m]=0);});
-  records.forEach(r=>{if(!wt[r.worker])wt[r.worker]={total:0};if(wt[r.worker][r.model]===undefined)wt[r.worker][r.model]=0;wt[r.worker][r.model]+=r.qty;wt[r.worker].total+=r.qty;});
-  const maxT=Math.max(...workers.map(w=>wt[w]?.total||0),1);
-  document.getElementById('summaryPage').innerHTML=workers.map(w=>{
-    const d=wt[w]||{};const pct=Math.round((d.total||0)/maxT*100);
-    return `<div class="worker-summary-card">
-      <div class="ws-header">
-        <div class="ws-worker">
-          <div class="worker-avatar" style="width:38px;height:38px;font-size:.95rem">${w.charAt(0)}</div>
-          <div><div style="font-weight:700;font-size:.95rem">${w}</div><div style="font-size:.68rem;color:var(--ink3)">${records.filter(r=>r.worker===w).length} سجل</div></div>
-        </div>
-        <div style="text-align:center"><div class="ws-total">${d.total||0}</div><div class="ws-total-lbl">جبة</div></div>
-      </div>
-      <div class="ws-bar"><div class="ws-bar-fill" style="width:${pct}%"></div></div>
-      <div class="ws-models" style="margin-top:.7rem">
-        ${am.filter(m=>d[m]>0).map(m=>`<div class="ws-model-item"><div class="ws-model-name">${m}</div><div class="ws-model-val">${d[m]||0}</div></div>`).join('')}
-      </div>
-    </div>`;}).join('');
+  var am=Array.from(new Set(models.concat(records.map(function(r){return r.model;}))));
+  var wt={};
+  workers.forEach(function(w){wt[w]={total:0};am.forEach(function(m){wt[w][m]=0;});});
+  records.forEach(function(r){
+    if(!wt[r.worker])wt[r.worker]={total:0};
+    if(wt[r.worker][r.model]===undefined)wt[r.worker][r.model]=0;
+    wt[r.worker][r.model]+=r.qty;wt[r.worker].total+=r.qty;
+  });
+  var maxT=Math.max.apply(null,workers.map(function(w){return wt[w]?wt[w].total||0:0;}).concat([1]));
+  document.getElementById('summaryPage').innerHTML=workers.map(function(w){
+    var d=wt[w]||{},pct=Math.round((d.total||0)/maxT*100);
+    return '<div class="worker-summary-card">'+
+      '<div class="ws-header"><div class="ws-worker">'+
+      '<div class="worker-avatar" style="width:38px;height:38px">'+w.charAt(0)+'</div>'+
+      '<div><div style="font-weight:700;font-size:.95rem">'+w+'</div>'+
+      '<div style="font-size:.68rem;color:var(--ink3)">'+records.filter(function(r){return r.worker===w;}).length+' سجل</div></div></div>'+
+      '<div style="text-align:center"><div class="ws-total">'+(d.total||0)+'</div><div class="ws-total-lbl">جبة</div></div></div>'+
+      '<div class="ws-bar"><div class="ws-bar-fill" style="width:'+pct+'%"></div></div>'+
+      '<div class="ws-models" style="margin-top:.7rem">'+
+      am.filter(function(m){return d[m]>0;}).map(function(m){
+        return '<div class="ws-model-item"><div class="ws-model-name">'+m+'</div><div class="ws-model-val">'+d[m]+'</div></div>';
+      }).join('')+'</div></div>';
+  }).join('');
 }
 
-// ── REPORT ────────────────────────────────────────────────────────────────
+// ── Report ────────────────────────────────────────────
 function renderReport(){
-  const mr=gmr(rYear,rMonth),mn=AM[rMonth]+' '+rYear;
-  const totalQ=mr.reduce((s,r)=>s+r.qty,0);
-  const days=new Set(mr.map(r=>r.date));
-  const avg=days.size?(totalQ/days.size).toFixed(1):0;
-  const wm={};mr.forEach(r=>wm[r.worker]=(wm[r.worker]||0)+r.qty);
-  const best=Object.entries(wm).sort((a,b)=>b[1]-a[1])[0];
-
-  let html=`
-    <div class="report-month-nav">
-      <button class="nav-arrow" onclick="rMonth--;if(rMonth<0){rMonth=11;rYear--;}renderReport()">◀</button>
-      <div class="month-disp">${mn}</div>
-      <button class="nav-arrow" onclick="rMonth++;if(rMonth>11){rMonth=0;rYear++;}renderReport()">▶</button>
-    </div>
-    <div class="kpi-row">
-      <div class="kpi-card gold"><div class="kpi-icon2">🧵</div><div class="kpi-num">${totalQ}</div><div class="kpi-lbl">إجمالي الجبب</div></div>
-      <div class="kpi-card teal"><div class="kpi-icon2">📋</div><div class="kpi-num">${mr.length}</div><div class="kpi-lbl">السجلات</div></div>
-      <div class="kpi-card blue"><div class="kpi-icon2">👩</div><div class="kpi-num">${new Set(mr.map(r=>r.worker)).size}</div><div class="kpi-lbl">موظفات نشطات</div></div>
-      <div class="kpi-card rose"><div class="kpi-icon2">📈</div><div class="kpi-num">${avg}</div><div class="kpi-lbl">متوسط يومي</div></div>
-      <div class="kpi-card purple"><div class="kpi-icon2">👗</div><div class="kpi-num">${new Set(mr.map(r=>r.model)).size}</div><div class="kpi-lbl">موديلات</div></div>
-      <div class="kpi-card gold"><div class="kpi-icon2">📅</div><div class="kpi-num">${days.size}</div><div class="kpi-lbl">أيام الإنتاج</div></div>
-      ${best?`<div class="kpi-card champion"><div class="kpi-icon2">🏆</div><div class="kpi-num">${best[0]} — ${best[1]} جبة</div><div class="kpi-lbl">الموظفة الأعلى إنتاجاً</div></div>`:''}
-    </div>`;
-
-  // Ranking
-  const sorted=Object.entries(wm).sort((a,b)=>b[1]-a[1]);
-  const maxW=sorted[0]?.[1]||1;
+  var mr=records.filter(function(r){return r.date&&r.date.startsWith(rYear+'-'+String(rMonth+1).padStart(2,'0'));});
+  var mn=AM[rMonth]+' '+rYear;
+  var totalQ=mr.reduce(function(s,r){return s+r.qty;},0);
+  var days=new Set(mr.map(function(r){return r.date;}));
+  var avg=days.size?(totalQ/days.size).toFixed(1):0;
+  var wm={};mr.forEach(function(r){wm[r.worker]=(wm[r.worker]||0)+r.qty;});
+  var best=Object.entries(wm).sort(function(a,b){return b[1]-a[1];})[0];
+  var html='<div class="report-month-nav">'+
+    '<button class="nav-arrow" onclick="rMonth--;if(rMonth<0){rMonth=11;rYear--;}renderReport()">◀</button>'+
+    '<div class="month-disp">'+mn+'</div>'+
+    '<button class="nav-arrow" onclick="rMonth++;if(rMonth>11){rMonth=0;rYear++;}renderReport()">▶</button></div>'+
+    '<div class="kpi-row">'+
+    '<div class="kpi-card gold"><div class="kpi-icon2">🧵</div><div class="kpi-num">'+totalQ+'</div><div class="kpi-lbl">إجمالي الجبب</div></div>'+
+    '<div class="kpi-card teal"><div class="kpi-icon2">📋</div><div class="kpi-num">'+mr.length+'</div><div class="kpi-lbl">السجلات</div></div>'+
+    '<div class="kpi-card blue"><div class="kpi-icon2">👩</div><div class="kpi-num">'+new Set(mr.map(function(r){return r.worker;})).size+'</div><div class="kpi-lbl">موظفات نشطات</div></div>'+
+    '<div class="kpi-card rose"><div class="kpi-icon2">📈</div><div class="kpi-num">'+avg+'</div><div class="kpi-lbl">متوسط يومي</div></div>'+
+    '<div class="kpi-card purple"><div class="kpi-icon2">👗</div><div class="kpi-num">'+new Set(mr.map(function(r){return r.model;})).size+'</div><div class="kpi-lbl">موديلات</div></div>'+
+    '<div class="kpi-card gold"><div class="kpi-icon2">📅</div><div class="kpi-num">'+days.size+'</div><div class="kpi-lbl">أيام الإنتاج</div></div>'+
+    (best?'<div class="kpi-card champion"><div class="kpi-icon2">🏆</div><div class="kpi-num">'+best[0]+' — '+best[1]+' جبة</div><div class="kpi-lbl">الموظفة الأعلى إنتاجاً</div></div>':'')+
+    '</div>';
+  var sorted=Object.entries(wm).sort(function(a,b){return b[1]-a[1];});
+  var maxW=sorted[0]?sorted[0][1]:1;
   if(sorted.length){
-    html+=`<div class="report-section"><div class="rs-header"><span class="rs-title">🏆 ترتيب الموظفات</span></div><div class="rs-body"><div class="rank-list">`;
-    sorted.forEach(([w,q],i)=>{
-      const rc=i===0?'r1':i===1?'r2':i===2?'r3':'rn';
-      const wr=mr.filter(r=>r.worker===w);
-      html+=`<div class="rank-item">
-        <div class="rank-num ${rc}">${i+1}</div>
-        <div class="rank-av">${w.charAt(0)}</div>
-        <div class="rank-info"><div class="rank-name">${w}</div><div class="rank-sub">${new Set(wr.map(r=>r.date)).size} يوم • ${wr.length} سجل</div></div>
-        <div class="rank-total">${q}</div>
-      </div>`;
+    html+='<div class="report-section"><div class="rs-header"><span class="rs-title">🏆 ترتيب الموظفات</span></div><div class="rs-body"><div class="rank-list">';
+    sorted.forEach(function(entry,i){
+      var w=entry[0],q=entry[1];
+      var rc=i===0?'r1':i===1?'r2':i===2?'r3':'rn';
+      var wr=mr.filter(function(r){return r.worker===w;});
+      html+='<div class="rank-item"><div class="rank-num '+rc+'">'+(i+1)+'</div>'+
+        '<div class="rank-av">'+w.charAt(0)+'</div>'+
+        '<div class="rank-info"><div class="rank-name">'+w+'</div><div class="rank-sub">'+new Set(wr.map(function(r){return r.date;})).size+' يوم • '+wr.length+' سجل</div></div>'+
+        '<div class="rank-total">'+q+'</div></div>';
     });
-    html+=`</div></div></div>`;
-  }
-
-  // Worker bars
-  if(sorted.length){
-    html+=`<div class="report-section"><div class="rs-header"><span class="rs-title">📊 مقارنة الإنتاج</span></div><div class="rs-body"><div class="bar-chart">`;
-    sorted.forEach(([w,q],i)=>{const pct=Math.round(q/maxW*100);html+=`<div class="bar-row"><div class="bar-lbl">${w}</div><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${MC[i%MC.length]}"><span class="bar-val">${q}</span></div></div></div>`;});
-    html+=`</div></div></div>`;
-  }
-
-  // Model breakdown
-  const mm={};mr.forEach(r=>mm[r.model]=(mm[r.model]||0)+r.qty);
-  const sortedM=Object.entries(mm).sort((a,b)=>b[1]-a[1]);
-  if(sortedM.length){
-    const maxMM=sortedM[0][1];
-    html+=`<div class="report-section"><div class="rs-header"><span class="rs-title">👗 إنتاج حسب الموديل</span></div><div class="rs-body"><div class="bar-chart">`;
-    sortedM.forEach(([m,q],i)=>{const pct=Math.round(q/maxMM*100);html+=`<div class="bar-row"><div class="bar-lbl">${m}</div><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${MC[(i+2)%MC.length]}"><span class="bar-val">${q}</span></div></div></div>`;});
-    html+=`</div></div></div>`;
-  }
-
-  // Colors
-  const cm2={};mr.forEach(r=>cm2[r.color]=(cm2[r.color]||0)+r.qty);
-  const sortedC=Object.entries(cm2).sort((a,b)=>b[1]-a[1]).slice(0,10);
-  const totalQC=sortedC.reduce((s,[,q])=>s+q,0)||1;
-  if(sortedC.length){
-    html+=`<div class="report-section"><div class="rs-header"><span class="rs-title">🎨 توزيع الألوان</span></div><div class="rs-body"><div class="color-list">`;
-    sortedC.forEach(([n,q])=>{const hex=gch(n);const pct=Math.round(q/totalQC*100);html+=`<div class="color-row"><div class="cswatch" style="background:${hex}"></div><div class="cname">${n}</div><div class="ctrack"><div class="cfill" style="width:${pct}%;background:${hex}"></div></div><div class="ccnt">${q}</div></div>`;});
-    html+=`</div></div></div>`;
-  }
-
-  // Sizes
-  const szs=['M','L','XL','XXL','3XL'],szc=['#b8892a','#1a6b5c','#8b2a3a','#1a4a8b','#5a2a8b'];
-  const szm={};szs.forEach(s=>szm[s]=0);mr.forEach(r=>szm[r.size]=(szm[r.size]||0)+r.qty);
-  const totalSz=Object.values(szm).reduce((a,b)=>a+b,0)||1;
-  html+=`<div class="report-section"><div class="rs-header"><span class="rs-title">📐 توزيع المقاسات</span></div><div class="rs-body">
-    <div class="size-grid">${szs.map((s,i)=>`<div class="size-item"><div class="size-lbl">${s}</div><div class="size-val">${szm[s]}</div><div class="size-pct">${Math.round(szm[s]/totalSz*100)}%</div></div>`).join('')}</div>
-    <div class="bar-chart">${szs.map((s,i)=>{const pct=Math.round(szm[s]/totalSz*100);return`<div class="bar-row"><div class="bar-lbl" style="min-width:38px">${s}</div><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${szc[i]}"><span class="bar-val">${szm[s]}</span></div></div></div>`;}).join('')}</div>
-  </div></div>`;
-
-  // Daily
-  const dm={};mr.forEach(r=>{if(!dm[r.date])dm[r.date]={q:0,w:new Set()};dm[r.date].q+=r.qty;dm[r.date].w.add(r.worker);});
-  const sortedD=Object.keys(dm).sort();
-  const maxDQ=Math.max(...sortedD.map(d=>dm[d].q),0);
-  if(sortedD.length){
-    html+=`<div class="report-section"><div class="rs-header"><span class="rs-title">📆 الإنتاج اليومي</span></div><div class="rs-body"><div class="daily-cards">`;
-    sortedD.forEach(d=>{
-      const data=dm[d],dow=new Date(d).getDay(),isPeak=data.q===maxDQ;
-      const pct=Math.round(data.q/maxDQ*100);
-      html+=`<div class="day-card">
-        <div class="day-date"><div class="day-d">${d.slice(8)}<span style="font-size:.68rem;color:var(--ink3)"> / ${d.slice(5,7)}</span></div><div class="day-dow">${AD[dow]}</div></div>
-        <div class="day-bar-wrap"><div style="display:flex;align-items:center;gap:.3rem">${isPeak?'<span class="peak-chip">🔥 ذروة</span>':''}<span style="font-size:.72rem;color:var(--ink3)">${data.w.size} موظفة</span></div><div class="day-bar-track"><div class="day-bar-fill" style="width:${pct}%"></div></div></div>
-        <div class="day-qty">${data.q}</div>
-      </div>`;
+    html+='</div></div></div>';
+    html+='<div class="report-section"><div class="rs-header"><span class="rs-title">📊 مقارنة الإنتاج</span></div><div class="rs-body"><div class="bar-chart">';
+    sorted.forEach(function(entry,i){
+      var w=entry[0],q=entry[1],pct=Math.round(q/maxW*100);
+      html+='<div class="bar-row"><div class="bar-lbl">'+w+'</div><div class="bar-track"><div class="bar-fill" style="width:'+pct+'%;background:'+MC[i%MC.length]+'"><span class="bar-val">'+q+'</span></div></div></div>';
     });
-    html+=`</div></div></div>`;
+    html+='</div></div></div>';
   }
-
-  html+=`<button class="export-btn-full" onclick="exportMonthlyReport()">📊 تصدير تقرير ${mn}</button>`;
+  var mm={};mr.forEach(function(r){mm[r.model]=(mm[r.model]||0)+r.qty;});
+  var sM=Object.entries(mm).sort(function(a,b){return b[1]-a[1];});
+  if(sM.length){
+    var maxMM=sM[0][1];
+    html+='<div class="report-section"><div class="rs-header"><span class="rs-title">👗 إنتاج حسب الموديل</span></div><div class="rs-body"><div class="bar-chart">';
+    sM.forEach(function(entry,i){var m=entry[0],q=entry[1],pct=Math.round(q/maxMM*100);html+='<div class="bar-row"><div class="bar-lbl">'+m+'</div><div class="bar-track"><div class="bar-fill" style="width:'+pct+'%;background:'+MC[(i+2)%MC.length]+'"><span class="bar-val">'+q+'</span></div></div></div>';});
+    html+='</div></div></div>';
+  }
+  if(!mr.length) html+='<div class="empty"><div class="empty-icon">📅</div><p>لا توجد بيانات لهذا الشهر</p></div>';
+  html+='<button class="export-btn-full" onclick="exportMonthly()">📊 تصدير تقرير '+mn+'</button>';
   document.getElementById('reportPage').innerHTML=html;
 }
 
-// ── SETTINGS ─────────────────────────────────────────────────────────────
+// ── Settings render ───────────────────────────────────
 function renderSettings(){
-  document.getElementById('settingsPage').innerHTML=`
-    <!-- Workers -->
-    <div class="settings-section">
-      <div class="settings-section-title">👩 الموظفات</div>
-      ${workers.map((w,i)=>`<div class="settings-item">
-        <div><div class="si-name">${w}</div><div class="si-sub">موظفة #${i+1}</div></div>
-        <div class="si-actions"><button class="si-del" onclick="removeWorker('${w}')">🗑️</button></div>
-      </div>`).join('')}
-      <div class="add-item-row">
-        <input type="text" id="new_worker" placeholder="اسم موظفة جديدة...">
-        <button class="add-item-btn" onclick="addWorker()">+ إضافة موظفة</button>
-      </div>
-    </div>
-    <!-- Models -->
-    <div class="settings-section">
-      <div class="settings-section-title">👗 الموديلات</div>
-      ${models.map((m,i)=>`<div class="settings-item">
-        <div><div class="si-name">${m}</div><div class="si-sub">موديل #${i+1}</div></div>
-        <div class="si-actions"><button class="si-del" onclick="removeModel('${m}')">🗑️</button></div>
-      </div>`).join('')}
-      <div class="add-item-row">
-        <input type="text" id="new_model" placeholder="اسم موديل جديد...">
-        <button class="add-item-btn" onclick="addModel()">+ إضافة موديل</button>
-      </div>
-    </div>
-    <!-- Colors -->
-    <div class="settings-section">
-      <div class="settings-section-title">🎨 الألوان</div>
-      ${colors.map(c=>`<div class="settings-item">
-        <div style="display:flex;align-items:center;gap:.6rem">
-          <div style="width:20px;height:20px;border-radius:5px;background:${c.hex};border:2px solid rgba(0,0,0,.1)"></div>
-          <div class="si-name">${c.name}</div>
-        </div>
-        <div class="si-actions"><button class="si-del" onclick="removeColor('${c.name}')">🗑️</button></div>
-      </div>`).join('')}
-      <div class="add-item-row">
-        <input type="text" id="new_color_name" placeholder="اسم اللون...">
-        <div style="display:flex;gap:.5rem;margin-top:.4rem">
-          <input type="color" id="new_color_hex" value="#6699cc" style="width:48px;height:40px;border-radius:9px;border:1px solid var(--border2);cursor:pointer;padding:2px;">
-          <button class="add-item-btn" style="flex:1;margin:0" onclick="addColor()">+ إضافة لون</button>
-        </div>
-      </div>
-    </div>
-    <!-- Export -->
-    <div class="settings-section">
-      <div class="settings-section-title">📊 التصدير</div>
-      <div style="padding:.85rem 1rem">
-        <button class="export-btn-full" style="margin:0" onclick="exportXLSX()">📊 تصدير كل السجلات</button>
-      </div>
-    </div>`;
+  document.getElementById('settingsPage').innerHTML=
+    '<div class="settings-section"><div class="settings-section-title">👩 الموظفات</div>'+
+    workers.map(function(w,i){return '<div class="settings-item"><div><div class="si-name">'+w+'</div><div class="si-sub">موظفة #'+(i+1)+'</div></div><div><button class="si-del" onclick="removeWorker(\''+w+'\')">🗑️</button></div></div>';}).join('')+
+    '<div class="add-item-row"><input type="text" id="new_worker" placeholder="اسم موظفة جديدة..."><button class="add-item-btn" onclick="addWorker()">+ إضافة موظفة</button></div></div>'+
+    '<div class="settings-section"><div class="settings-section-title">👗 الموديلات</div>'+
+    models.map(function(m,i){return '<div class="settings-item"><div><div class="si-name">'+m+'</div><div class="si-sub">موديل #'+(i+1)+'</div></div><div><button class="si-del" onclick="removeModel(\''+m+'\')">🗑️</button></div></div>';}).join('')+
+    '<div class="add-item-row"><input type="text" id="new_model" placeholder="اسم موديل جديد..."><button class="add-item-btn" onclick="addModel()">+ إضافة موديل</button></div></div>'+
+    '<div class="settings-section"><div class="settings-section-title">🎨 الألوان</div>'+
+    colors.map(function(c){return '<div class="settings-item"><div style="display:flex;align-items:center;gap:.6rem"><div style="width:20px;height:20px;border-radius:5px;background:'+c.hex+'"></div><div class="si-name">'+c.name+'</div></div><div><button class="si-del" onclick="removeColor(\''+c.name+'\')">🗑️</button></div></div>';}).join('')+
+    '<div class="add-item-row"><input type="text" id="new_color_name" placeholder="اسم اللون..."><div style="display:flex;gap:.5rem;margin-top:.4rem"><input type="color" id="new_color_hex" value="#6699cc" style="width:48px;height:40px;border-radius:9px;border:1px solid var(--border2);padding:2px;cursor:pointer;"><button class="add-item-btn" style="flex:1;margin:0" onclick="addColor()">+ إضافة لون</button></div></div></div>'+
+    '<div class="settings-section"><div class="settings-section-title">📊 التصدير والنسخ الاحتياطي</div><div style="padding:.85rem 1rem;display:flex;flex-direction:column;gap:.6rem">'+
+    '<button class="export-btn-full" style="margin:0" onclick="exportXLSX()">📊 تصدير كل السجلات (Excel)</button>'+
+    '<button class="export-btn-full" style="margin:0;background:linear-gradient(135deg,var(--teal),var(--teal2))" onclick="backupJSON()">💾 نسخة احتياطية كاملة (JSON)</button>'+
+    '<button class="export-btn-full" style="margin:0;background:linear-gradient(135deg,#555,#333)" onclick="triggerRestore()">📂 استعادة من نسخة احتياطية</button>'+
+    '<input type="file" id="restoreInput" accept=".json" style="display:none" onchange="restoreJSON(this)">'+
+    '<div style="font-size:.7rem;color:var(--ink3);text-align:center;padding-top:.2rem">⚠️ الاستعادة ستستبدل جميع البيانات الحالية</div>'+
+    '</div></div>'+
+    '<div class="settings-section"><div class="settings-section-title">🔐 كلمة سر المدير</div><div style="padding:.85rem 1rem;font-size:.8rem;color:var(--ink3)">لتغيير كلمة السر، عدّل قيمة <code style="background:var(--bg2);padding:.1rem .35rem;border-radius:4px">ADMIN_PASSWORD</code> في الكود.</div></div>';
 }
 
-function addWorker(){const n=document.getElementById('new_worker').value.trim();if(!n){showToast('أدخلي الاسم','error');return;}if(workers.includes(n)){showToast('موجودة مسبقاً','error');return;}workers.push(n);document.getElementById('new_worker').value='';renderSettings();showToast(`تمت إضافة ${n} ✓`,'success');}
-function removeWorker(n){workers=workers.filter(w=>w!==n);renderSettings();showToast('تم الحذف','info');}
-function addModel(){const n=document.getElementById('new_model').value.trim();if(!n){showToast('أدخل الموديل','error');return;}if(models.includes(n)){showToast('موجود مسبقاً','error');return;}models.push(n);document.getElementById('new_model').value='';renderSettings();showToast(`تمت إضافة موديل ${n} ✓`,'success');}
-function removeModel(n){models=models.filter(m=>m!==n);renderSettings();showToast('تم الحذف','info');}
-function addColor(){const n=document.getElementById('new_color_name').value.trim(),h=document.getElementById('new_color_hex').value;if(!n){showToast('أدخل اسم اللون','error');return;}if(colors.find(c=>c.name===n)){showToast('موجود مسبقاً','error');return;}colors.push({name:n,hex:h});document.getElementById('new_color_name').value='';renderSettings();showToast(`تمت إضافة اللون ${n} ✓`,'success');}
-function removeColor(n){colors=colors.filter(c=>c.name!==n);renderSettings();showToast('تم الحذف','info');}
+// ── Helpers ───────────────────────────────────────────
+function gch(n){var c=colors.find(function(c){return c.name===n;});return c?c.hex:'#aaa';}
 
-// ── EXPORT ────────────────────────────────────────────────────────────────
+// ── Backup / Restore ──────────────────────────────────
+function triggerRestore(){
+  var el = document.getElementById('restoreInput');
+  if(el) el.click();
+}
+
+function backupJSON(){
+  var data = {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    workers: workers,
+    models:  models,
+    colors:  colors,
+    records: records.map(function(r){
+      return {worker:r.worker,model:r.model,size:r.size,color:r.color,qty:r.qty,date:r.date,note:r.note||'',createdAt:r.createdAt||0};
+    })
+  };
+  var blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  var d    = new Date();
+  a.href   = url;
+  a.download = 'ورشة_نسخة_احتياطية_'+d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+'.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('تم حفظ النسخة الاحتياطية ✓','success');
+}
+
+function restoreJSON(input){
+  var file = input.files[0];
+  if(!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e){
+    try {
+      var data = JSON.parse(e.target.result);
+      if(!data.records || !data.workers){toast('ملف غير صالح','error');return;}
+      if(!confirm('⚠️ هل أنت متأكد؟ سيتم استبدال جميع البيانات الحالية.\n\nالسجلات في الملف: '+data.records.length+'\nالموظفات: '+data.workers.join('، '))){return;}
+      if(!db){toast('يجب الاتصال بـ Firebase أولاً','error');return;}
+      toast('جاري الاستعادة...','info');
+      syncBadge('syncing');
+      // Save settings
+      db.collection('settings').doc('workshop_config').set({
+        workers: data.workers, models: data.models, colors: data.colors
+      }).then(function(){
+        // Delete existing records then re-add
+        return db.collection('records').get();
+      }).then(function(snap){
+        var batch = db.batch();
+        snap.docs.forEach(function(d){ batch.delete(d.ref); });
+        return batch.commit();
+      }).then(function(){
+        // Add restored records in batches of 500
+        var recs = data.records;
+        var batches = [];
+        for(var i=0; i<recs.length; i+=400){
+          batches.push(recs.slice(i,i+400));
+        }
+        return batches.reduce(function(p, chunk){
+          return p.then(function(){
+            var b = db.batch();
+            chunk.forEach(function(r){
+              b.set(db.collection('records').doc(), r);
+            });
+            return b.commit();
+          });
+        }, Promise.resolve());
+      }).then(function(){
+        toast('تمت الاستعادة بنجاح ✓ ('+data.records.length+' سجل)','success');
+        syncBadge('ok');
+      }).catch(function(err){
+        toast('خطأ في الاستعادة','error');
+        syncBadge('err');
+        console.error(err);
+      });
+    } catch(err){
+      toast('ملف تالف أو غير صالح','error');
+    }
+  };
+  reader.readAsText(file);
+  input.value=''; // allow re-selecting same file
+}
+
+// ── Export ────────────────────────────────────────────
 function exportXLSX(){
-  const wb=XLSX.utils.book_new(),am=[...new Set([...models,...records.map(r=>r.model)])];
-  const r1=[['#','الموظفة','الموديل','المقاس','اللون','العدد','التاريخ','ملاحظة'],...records.map((r,i)=>[i+1,r.worker,r.model,r.size,r.color,r.qty,r.date,r.note||''])];
-  const ws1=XLSX.utils.aoa_to_sheet(r1);ws1['!cols']=[{wch:5},{wch:12},{wch:12},{wch:8},{wch:10},{wch:8},{wch:12},{wch:20}];XLSX.utils.book_append_sheet(wb,ws1,'السجلات الكاملة');
-  const h2=['الموظفة',...am,'الإجمالي'],r2=[h2],gt={total:0};am.forEach(m=>gt[m]=0);
-  workers.forEach(w=>{const d={total:0};am.forEach(m=>d[m]=0);records.filter(r=>r.worker===w).forEach(r=>{d[r.model]+=r.qty;d.total+=r.qty;});am.forEach(m=>gt[m]+=d[m]);gt.total+=d.total;r2.push([w,...am.map(m=>d[m]),d.total]);});
-  r2.push(['الإجمالي',...am.map(m=>gt[m]),gt.total]);
-  const ws2=XLSX.utils.aoa_to_sheet(r2);ws2['!cols']=[{wch:14},...am.map(()=>({wch:10})),{wch:12}];XLSX.utils.book_append_sheet(wb,ws2,'ملخص إجمالي');
-  const d=new Date();XLSX.writeFile(wb,`ورشة_الخياطة_${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}.xlsx`);
-  showToast('تم تصدير Excel بنجاح 📊','success');
+  var wb=XLSX.utils.book_new();
+  var am=Array.from(new Set(models.concat(records.map(function(r){return r.model;}))));
+  var r1=[['#','الموظفة','الموديل','المقاس','اللون','العدد','التاريخ','ملاحظة']];
+  records.forEach(function(r,i){r1.push([i+1,r.worker,r.model,r.size,r.color,r.qty,r.date,r.note||'']);});
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(r1),'السجلات');
+  var d=new Date();
+  XLSX.writeFile(wb,'ورشة_الخياطة_'+d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()+'.xlsx');
+  toast('تم التصدير 📊','success');
 }
 
-function exportMonthlyReport(){
-  const mr=gmr(rYear,rMonth),mn=AM[rMonth]+' '+rYear;
-  const wb=XLSX.utils.book_new();
-  const am=[...new Set([...models,...mr.map(r=>r.model)])];
-  const totalQ=mr.reduce((s,r)=>s+r.qty,0);
-  const wm2={};mr.forEach(r=>wm2[r.worker]=(wm2[r.worker]||0)+r.qty);
-  const kpiR=[['التقرير الشهري',mn],[''],['المؤشر','القيمة'],['إجمالي الجبب',totalQ],['إجمالي السجلات',mr.length],['الموظفات النشطات',new Set(mr.map(r=>r.worker)).size],['الموديلات',new Set(mr.map(r=>r.model)).size],['أيام الإنتاج',new Set(mr.map(r=>r.date)).size],[''],['ترتيب الموظفات','الإجمالي']];
-  Object.entries(wm2).sort((a,b)=>b[1]-a[1]).forEach(([w,q],i)=>kpiR.push([`${i+1}. ${w}`,q]));
-  const ws1=XLSX.utils.aoa_to_sheet(kpiR);ws1['!cols']=[{wch:25},{wch:15}];XLSX.utils.book_append_sheet(wb,ws1,'ملخص الشهر');
-  const h2=['الموظفة',...am,'أيام عمل','الإجمالي'],r2=[h2],gt2={total:0};am.forEach(m=>gt2[m]=0);
-  workers.forEach(w=>{const wr=mr.filter(r=>r.worker===w);const md={};am.forEach(m=>md[m]=0);let wt=0;wr.forEach(r=>{md[r.model]+=r.qty;wt+=r.qty;});am.forEach(m=>gt2[m]+=md[m]);gt2.total+=wt;r2.push([w,...am.map(m=>md[m]),new Set(wr.map(r=>r.date)).size,wt]);});
-  r2.push(['الإجمالي',...am.map(m=>gt2[m]),'',gt2.total]);
-  const ws2=XLSX.utils.aoa_to_sheet(r2);ws2['!cols']=[{wch:14},...am.map(()=>({wch:10})),{wch:10},{wch:12}];XLSX.utils.book_append_sheet(wb,ws2,'تفاصيل الموظفات');
-  const r3=[['التاريخ','الإجمالي','السجلات'],...Object.entries((() => {const dm={};mr.forEach(r=>{if(!dm[r.date])dm[r.date]={q:0,c:0};dm[r.date].q+=r.qty;dm[r.date].c++;});return dm;})()).sort().map(([d,v])=>[d,v.q,v.c])];
-  const ws3=XLSX.utils.aoa_to_sheet(r3);XLSX.utils.book_append_sheet(wb,ws3,'الإنتاج اليومي');
-  const r4=[['#','الموظفة','الموديل','المقاس','اللون','العدد','التاريخ'],...mr.map((r,i)=>[i+1,r.worker,r.model,r.size,r.color,r.qty,r.date])];
-  const ws4=XLSX.utils.aoa_to_sheet(r4);XLSX.utils.book_append_sheet(wb,ws4,'السجلات');
-  XLSX.writeFile(wb,`تقرير_${mn.replace(' ','_')}.xlsx`);
-  showToast('تم تصدير التقرير بنجاح 📊','success');
+function exportMonthly(){
+  var mr=records.filter(function(r){return r.date&&r.date.startsWith(rYear+'-'+String(rMonth+1).padStart(2,'0'));});
+  var mn=AM[rMonth]+' '+rYear;
+  var wb=XLSX.utils.book_new();
+  var r1=[['#','الموظفة','الموديل','المقاس','اللون','العدد','التاريخ']];
+  mr.forEach(function(r,i){r1.push([i+1,r.worker,r.model,r.size,r.color,r.qty,r.date]);});
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(r1),'السجلات');
+  XLSX.writeFile(wb,'تقرير_'+mn.replace(' ','_')+'.xlsx');
+  toast('تم التصدير 📊','success');
 }
 
-// ── TOAST ─────────────────────────────────────────────────────────────────
-function showToast(msg,type='info'){
-  const t=document.getElementById('toast');t.textContent=msg;t.className=`toast show ${type}`;
-  setTimeout(()=>t.classList.remove('show'),2800);
-}
-
-// Close sheets on overlay click
-['recordOverlay','deleteOverlay'].forEach(id=>{
-  document.getElementById(id).addEventListener('click',function(e){if(e.target===this)closeSheet(id);});
-});
-
-// INIT
-renderFilterBar();applyFilters();
-  if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("sw.js");
-}
+// ── Start ─────────────────────────────────────────────
+window.onload = function(){ initApp(); };
 </script>
 </body>
 </html>
