@@ -475,7 +475,7 @@ var MC=['#b8892a','#1a6b5c','#8b2a3a','#1a4a8b','#5a2a8b','#2c7a5c','#7a5c2c','#
 var workers=[], models=[], colors=[], records=[];
 var isAdmin=false, currentWorker=null;
 var editingId=null, deletingId=null, selColor='', wSelColor='';
-var filtW='',filtM='',filtC='',filtS='';
+var filtW='',filtM='',filtC='',filtS='',filtDate='';
 var rYear=new Date().getFullYear(), rMonth=new Date().getMonth();
 var curQty=1, wCurQty=1;
 var TODAY = new Date().toISOString().split('T')[0];
@@ -781,7 +781,7 @@ function refreshAdmin() {
 
 function applyFilters() {
   var fr=records.filter(function(r){
-    return (!filtW||r.worker===filtW)&&(!filtM||r.model===filtM)&&(!filtC||r.color===filtC)&&(!filtS||r.size===filtS);
+    return (!filtW||r.worker===filtW)&&(!filtM||r.model===filtM)&&(!filtC||r.color===filtC)&&(!filtS||r.size===filtS)&&(!filtDate||r.date===filtDate);
   });
   renderAdminCards(fr);
   renderMiniStats(fr);
@@ -804,7 +804,8 @@ function renderAdminFilterBar() {
     '<div class="filter-chip'+(filtM?' active-filter':'')+'">👗 <select onchange="filtM=this.value;applyFilters()" style="max-width:65px"><option value="">الكل</option>'+models.map(function(m){return '<option'+(m===filtM?' selected':'')+'>'+m+'</option>';}).join('')+'</select></div>'+
     '<div class="filter-chip'+(filtS?' active-filter':'')+'">📐 <select onchange="filtS=this.value;applyFilters()" style="max-width:55px"><option value="">الكل</option>'+['M','L','XL','XXL','3XL'].map(function(s){return '<option'+(s===filtS?' selected':'')+'>'+s+'</option>';}).join('')+'</select></div>'+
     '<div class="filter-chip'+(filtC?' active-filter':'')+'">🎨 <select onchange="filtC=this.value;applyFilters()" style="max-width:65px"><option value="">الكل</option>'+colors.map(function(c){return '<option value="'+c.name+'"'+(c.name===filtC?' selected':'')+'>'+c.name+'</option>';}).join('')+'</select></div>'+
-    '<div class="filter-chip" onclick="filtW=\'\';filtM=\'\';filtS=\'\';filtC=\'\';applyFilters();renderAdminFilterBar()">✕ مسح</div>';
+    '<div class="filter-chip'+(filtDate?' active-filter':'')+'">📅 <input type="date" value="'+filtDate+'" onchange="filtDate=this.value;applyFilters();renderAdminFilterBar()" style="border:none;background:transparent;font-family:Cairo,sans-serif;font-size:.72rem;color:inherit;outline:none;cursor:pointer;width:110px"></div>'+
+    '<div class="filter-chip" onclick="filtW=\'\';filtM=\'\';filtS=\'\';filtC=\'\';filtDate=\'\';applyFilters();renderAdminFilterBar()">✕ مسح</div>';
 }
 
 function renderAdminCards(fr) {
@@ -1141,9 +1142,50 @@ function exportMonthly(){
   var mr=records.filter(function(r){return r.date&&r.date.startsWith(rYear+'-'+String(rMonth+1).padStart(2,'0'));});
   var mn=AM[rMonth]+' '+rYear;
   var wb=XLSX.utils.book_new();
+
+  // ── ورقة 1: السجلات التفصيلية ──
   var r1=[['#','الموظفة','الموديل','المقاس','اللون','العدد','التاريخ']];
   mr.forEach(function(r,i){r1.push([i+1,r.worker,r.model,r.size,r.color,r.qty,r.date]);});
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(r1),'السجلات');
+  var ws1=XLSX.utils.aoa_to_sheet(r1);
+  ws1['!cols']=[{wch:4},{wch:12},{wch:12},{wch:8},{wch:10},{wch:8},{wch:12}];
+  XLSX.utils.book_append_sheet(wb,ws1,'السجلات');
+
+  // ── ورقة 2: إجمالي إنتاج كل موظفة ──
+  var am=Array.from(new Set(mr.map(function(r){return r.model;})));
+  var wt={};
+  workers.forEach(function(w){wt[w]={total:0};am.forEach(function(m){wt[w][m]=0;});});
+  mr.forEach(function(r){
+    if(!wt[r.worker])wt[r.worker]={total:0};
+    if(wt[r.worker][r.model]===undefined)wt[r.worker][r.model]=0;
+    wt[r.worker][r.model]+=r.qty;
+    wt[r.worker].total+=r.qty;
+  });
+  // رأس الجدول: الموظفة + الموديلات + الإجمالي
+  var r2=[['التقرير الشهري — '+mn],['']];
+  var header=['الموظفة'].concat(am).concat(['الإجمالي']);
+  r2.push(header);
+  // بيانات كل موظفة
+  var grandTotal=0;
+  var modelTotals={};am.forEach(function(m){modelTotals[m]=0;});
+  workers.forEach(function(w){
+    var wd=wt[w]||{total:0};
+    var row=[w];
+    am.forEach(function(m){row.push(wd[m]||0);modelTotals[m]+=(wd[m]||0);});
+    row.push(wd.total||0);
+    grandTotal+=wd.total||0;
+    r2.push(row);
+  });
+  // صف الإجمالي الكلي
+  var totalRow=['الإجمالي الكلي'];
+  am.forEach(function(m){totalRow.push(modelTotals[m]||0);});
+  totalRow.push(grandTotal);
+  r2.push(['']);
+  r2.push(totalRow);
+  var ws2=XLSX.utils.aoa_to_sheet(r2);
+  var cols=[{wch:14}];am.forEach(function(){cols.push({wch:10});});cols.push({wch:12});
+  ws2['!cols']=cols;
+  XLSX.utils.book_append_sheet(wb,ws2,'إجمالي الموظفات');
+
   XLSX.writeFile(wb,'تقرير_'+mn.replace(' ','_')+'.xlsx');
   toast('تم التصدير 📊','success');
 }
