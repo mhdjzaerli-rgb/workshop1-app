@@ -5,1328 +5,1104 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-  <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#2c1a0e">
-<title>ورشة الخياطة</title>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ورشة الخياطة">
+<meta name="theme-color" content="#3d2b1f">
+<title>ورشة الخياطة - سجل الجبب</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<!-- Firebase loaded as regular scripts (NO type=module) -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+  import { getDatabase, ref, set, onValue, push, remove, update }
+    from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBvj-qe12qdN2zCDSc5SrPjrbgl4fZyURI",
+    authDomain: "workshop2-e3cca.firebaseapp.com",
+    databaseURL: "https://workshop2-e3cca-default-rtdb.firebaseio.com",
+    projectId: "workshop2-e3cca",
+    storageBucket: "workshop2-e3cca.firebasestorage.app",
+    messagingSenderId: "488673144390",
+    appId: "1:488673144390:web:ff30d829b4cbeef0d6a447"
+  };
+
+  const FIREBASE_CONFIGURED = true;
+
+  let db, dbRef;
+  if (FIREBASE_CONFIGURED) {
+    const app = initializeApp(firebaseConfig);
+    db = getDatabase(app);
+    dbRef = ref(db, 'workshop');
+
+    // Listen for real-time changes
+    onValue(dbRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        window._fbModels  = data.models  || window._state.models;
+        window._fbTailors = data.tailors || window._state.tailors;
+        window._fbRecords = data.records ? Object.entries(data.records).map(([fbId, r]) => ({...r, fbId})) : [];
+        if (window._appReady) {
+          window._state.models  = window._fbModels;
+          window._state.tailors = window._fbTailors;
+          window._state.records = window._fbRecords;
+          window._app.onFirebaseSync();
+        }
+      }
+    });
+
+    window._firebase = { db, ref, set, onValue, push, remove, update, dbRef, configured: true };
+  } else {
+    window._firebase = { configured: false };
+  }
+</script>
+
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Amiri:wght@400;700&display=swap');
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-:root{
-  --bg:#fdf8f2;--bg2:#f0e8d8;--surface:#fff;--surface2:#faf5ee;
-  --border:#e2d0b8;--border2:#c8a87a;
-  --ink:#2c1a0e;--ink2:#6b4c33;--ink3:#a07850;
-  --gold:#b8892a;--gold2:#d4a843;--gold-light:#f5e6c0;
-  --teal:#1a6b5c;--teal2:#1f8470;--teal-light:#d8f0ea;
-  --rose:#8b2a3a;--rose-light:#f5dde1;
-  --blue:#1a4a8b;--purple:#5a2a8b;
-  --nav-h:64px;--top-h:60px;
-  --safe-b:env(safe-area-inset-bottom,0px);
-}
-html,body{height:100%;overflow:hidden;font-family:'Cairo',sans-serif;background:var(--bg);color:var(--ink);}
-[id^="screen-"]{display:none;flex-direction:column;height:100%;width:100%;}
-#screen-loading{background:linear-gradient(135deg,#2c1a0e,#4a2c14);align-items:center;justify-content:center;gap:1.2rem;display:flex;}
-.loading-icon{font-size:3.5rem;animation:pulse 1.2s ease-in-out infinite;}
-@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
-.loading-text{font-family:'Amiri',serif;font-size:1.3rem;color:#f5e6c0;}
-.loading-sub{font-size:.78rem;color:var(--gold2);}
-.loading-bar{width:160px;height:4px;background:rgba(255,255,255,.15);border-radius:2px;overflow:hidden;}
-.loading-bar-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));animation:loadBar 1.8s ease-in-out infinite;}
-@keyframes loadBar{0%{width:0%;margin-right:100%}50%{width:60%;margin-right:20%}100%{width:0%;margin-left:100%}}
-#screen-home{background:linear-gradient(160deg,#2c1a0e 0%,#4a2c14 40%,#2c1a0e 100%);align-items:center;overflow-y:auto;padding:2rem 1.2rem calc(1.5rem + var(--safe-b));}
-.home-logo{display:flex;flex-direction:column;align-items:center;gap:.6rem;margin-bottom:2rem;}
-.home-logo-icon{width:72px;height:72px;background:linear-gradient(135deg,var(--gold),var(--gold2));border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:2.2rem;box-shadow:0 8px 30px rgba(184,137,42,.4);}
-.home-logo-title{font-family:'Amiri',serif;font-size:1.6rem;color:#f5e6c0;font-weight:700;}
-.home-logo-sub{font-size:.75rem;color:var(--gold2);}
-.home-section-label{font-size:.75rem;font-weight:700;color:var(--gold2);letter-spacing:1.5px;margin-bottom:.75rem;align-self:flex-start;width:100%;max-width:420px;}
-.worker-pick-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;width:100%;max-width:420px;margin-bottom:1.5rem;}
-.worker-pick-btn{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:16px;padding:1rem .75rem;display:flex;flex-direction:column;align-items:center;gap:.5rem;cursor:pointer;font-family:'Cairo',sans-serif;}
-.worker-pick-btn:active{background:rgba(255,255,255,.22);transform:scale(.95);}
-.wpb-avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold2));display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:700;color:white;}
-.wpb-name{font-size:.88rem;font-weight:700;color:#f5e6c0;}
-.home-divider{width:100%;max-width:420px;display:flex;align-items:center;gap:.75rem;margin-bottom:1.2rem;}
-.home-divider-line{flex:1;height:1px;background:rgba(255,255,255,.12);}
-.home-divider-text{font-size:.72rem;color:rgba(255,255,255,.4);}
-.admin-login-btn{width:100%;max-width:420px;padding:.85rem;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.2);border-radius:14px;font-family:'Cairo',sans-serif;font-size:.9rem;font-weight:700;color:rgba(255,255,255,.7);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.5rem;}
-.admin-login-btn:active{background:rgba(0,0,0,.5);}
-.admin-pw-sheet{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:flex-end;justify-content:center;z-index:500;}
-.admin-pw-sheet.show{display:flex;}
-.admin-pw-box{background:var(--surface);border-radius:22px 22px 0 0;width:100%;padding:1.5rem 1.5rem calc(1.5rem + var(--safe-b));}
-.apw-handle{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto .75rem;}
-.apw-title{font-family:'Amiri',serif;font-size:1.15rem;font-weight:700;color:var(--gold);text-align:center;margin-bottom:1.2rem;}
-.apw-icon{font-size:2.2rem;text-align:center;margin-bottom:.5rem;}
-.apw-input{width:100%;padding:.85rem 1rem;background:var(--bg2);border:2px solid var(--border2);border-radius:13px;font-family:'Cairo',sans-serif;font-size:1.1rem;text-align:center;color:var(--ink);outline:none;letter-spacing:.15rem;margin-bottom:.5rem;}
-.apw-input:focus{border-color:var(--gold);}
-.apw-err{text-align:center;color:var(--rose);font-size:.82rem;font-weight:600;display:none;margin-bottom:.5rem;}
-.apw-btns{display:flex;gap:.65rem;margin-top:.5rem;}
-.apw-cancel{flex:1;padding:.75rem;background:var(--bg2);border:1px solid var(--border2);border-radius:12px;font-family:'Cairo',sans-serif;font-size:.88rem;font-weight:700;color:var(--ink2);cursor:pointer;}
-.apw-submit{flex:2;padding:.75rem;background:linear-gradient(135deg,#2c1a0e,#4a2c14);border:1px solid var(--gold);border-radius:12px;font-family:'Cairo',sans-serif;font-size:.88rem;font-weight:700;color:#f5e6c0;cursor:pointer;}
-#screen-workerApp{background:var(--bg);overflow:hidden;}
-.worker-topbar{height:var(--top-h);background:linear-gradient(135deg,var(--teal),var(--teal2));display:flex;align-items:center;justify-content:space-between;padding:0 1rem;flex-shrink:0;box-shadow:0 2px 12px rgba(0,0,0,.25);}
-.wt-info{display:flex;align-items:center;gap:.6rem;}
-.wt-avatar{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:.9rem;font-weight:700;color:white;}
-.wt-name{font-weight:700;font-size:1rem;color:white;}
-.wt-role{font-size:.6rem;color:rgba(255,255,255,.75);}
-.wt-stats{display:flex;gap:.5rem;align-items:center;}
-.wt-stat{background:rgba(0,0,0,.2);border-radius:9px;padding:.3rem .6rem;text-align:center;}
-.wt-stat-val{font-size:.95rem;font-weight:900;color:white;}
-.wt-stat-lbl{font-size:.55rem;color:rgba(255,255,255,.7);}
-.exit-btn{padding:.4rem .8rem;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:9px;color:white;font-family:'Cairo',sans-serif;font-size:.78rem;font-weight:600;cursor:pointer;}
-.worker-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:1rem;}
-.quick-add-card{margin:.85rem;background:var(--surface);border:2px solid var(--teal);border-radius:18px;overflow:hidden;box-shadow:0 4px 20px rgba(26,107,92,.15);}
-.qac-header{background:linear-gradient(135deg,var(--teal),var(--teal2));padding:.75rem 1rem;display:flex;align-items:center;gap:.5rem;}
-.qac-header-title{font-family:'Amiri',serif;font-size:1rem;color:white;font-weight:700;}
-.qac-body{padding:1rem;}
-.wform-group{margin-bottom:.85rem;}
-.wform-group label{display:block;font-size:.72rem;font-weight:700;color:var(--ink2);margin-bottom:.35rem;}
-.wform-group select,.wform-group input[type=date],.wform-group input[type=text]{width:100%;padding:.65rem .9rem;background:var(--bg2);border:1.5px solid var(--border2);border-radius:11px;font-family:'Cairo',sans-serif;font-size:1rem;color:var(--ink);outline:none;-webkit-appearance:none;}
-.wform-group select:focus,.wform-group input:focus{border-color:var(--teal);}
-.wform-grid2{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;}
-.qty-control{display:flex;align-items:center;gap:.75rem;}
-.qty-btn{width:48px;height:48px;border:none;background:var(--teal-light);border-radius:12px;font-size:1.4rem;font-weight:700;color:var(--teal);cursor:pointer;}
-.qty-btn:active{background:var(--teal);color:white;}
-.qty-val{flex:1;text-align:center;font-size:1.6rem;font-weight:900;color:var(--ink);}
-.worker-submit-btn{width:100%;padding:.9rem;background:linear-gradient(135deg,var(--teal),var(--teal2));border:none;border-radius:13px;font-family:'Cairo',sans-serif;font-size:1rem;font-weight:700;color:white;cursor:pointer;margin-top:.5rem;}
-.worker-submit-btn:active{opacity:.88;}
-.worker-recents-section{margin:.5rem .85rem .85rem;}
-.wrs-title{font-family:'Amiri',serif;font-size:.95rem;font-weight:700;color:var(--ink);margin-bottom:.6rem;}
-.wrec-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:.75rem;margin-bottom:.55rem;}
-.wrec-date{font-size:.7rem;color:var(--ink3);margin-bottom:.35rem;}
-.wrec-tags{display:flex;gap:.4rem;flex-wrap:wrap;}
-#screen-adminApp{background:var(--bg);overflow:hidden;}
-.admin-topbar{height:var(--top-h);background:linear-gradient(135deg,#2c1a0e,#4a2c14);display:flex;align-items:center;justify-content:space-between;padding:0 1rem;border-bottom:2px solid var(--gold);flex-shrink:0;}
-.at-brand{display:flex;align-items:center;gap:.55rem;}
-.at-icon{width:34px;height:34px;background:linear-gradient(135deg,var(--gold),var(--gold2));border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1rem;}
-.at-title{font-family:'Amiri',serif;font-size:1rem;font-weight:700;color:#f5e6c0;}
-.at-sub{font-size:.58rem;color:var(--gold2);}
-.at-actions{display:flex;align-items:center;gap:.4rem;}
-.topbar-btn{width:34px;height:34px;border:none;background:rgba(255,255,255,.1);border-radius:9px;color:#f5e6c0;font-size:.88rem;cursor:pointer;}
-.admin-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(var(--nav-h) + var(--safe-b) + .5rem);}
-.bottom-nav{height:calc(var(--nav-h) + var(--safe-b));padding-bottom:var(--safe-b);background:var(--surface);border-top:1px solid var(--border);display:flex;flex-shrink:0;}
-.anav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.2rem;border:none;background:transparent;font-family:'Cairo',sans-serif;font-size:.62rem;font-weight:600;color:var(--ink3);cursor:pointer;padding:.4rem 0;}
-.anav-btn .nav-icon{font-size:1.35rem;}
-.anav-btn.active{color:var(--gold);}
-.apage{display:none;}
-.apage.active{display:block;}
-.fab{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--nav-h) + var(--safe-b) + .8rem);z-index:40;width:56px;height:56px;background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;border-radius:50%;font-size:1.6rem;color:white;box-shadow:0 4px 20px rgba(184,137,42,.5);cursor:pointer;display:flex;align-items:center;justify-content:center;}
-.mini-stats{display:flex;gap:.6rem;padding:.4rem 1rem .7rem;overflow-x:auto;scrollbar-width:none;}
-.mini-stats::-webkit-scrollbar{display:none;}
-.mini-stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:.5rem .85rem;display:flex;align-items:center;gap:.5rem;flex-shrink:0;}
-.mini-stat-icon{font-size:1.1rem;}
-.mini-stat-val{font-size:1rem;font-weight:800;color:var(--ink);}
-.mini-stat-lbl{font-size:.6rem;color:var(--ink3);}
-.sec-header{display:flex;align-items:center;justify-content:space-between;padding:.75rem 1rem .5rem;}
-.sec-title{font-family:'Amiri',serif;font-size:1rem;font-weight:700;color:var(--ink);}
-.sec-count{font-size:.7rem;color:var(--ink3);background:var(--bg2);padding:.15rem .5rem;border-radius:12px;}
-.filter-scroll{display:flex;gap:.5rem;padding:.5rem 1rem;overflow-x:auto;scrollbar-width:none;}
-.filter-scroll::-webkit-scrollbar{display:none;}
-.filter-chip{display:flex;align-items:center;gap:.35rem;padding:.38rem .8rem;background:var(--surface);border:1px solid var(--border2);border-radius:20px;font-family:'Cairo',sans-serif;font-size:.75rem;font-weight:600;color:var(--ink2);cursor:pointer;white-space:nowrap;flex-shrink:0;}
-.filter-chip.active-filter{background:var(--gold);color:white;border-color:var(--gold);}
-.filter-chip select{border:none;background:transparent;font-family:'Cairo',sans-serif;font-size:.75rem;font-weight:600;color:inherit;outline:none;cursor:pointer;}
-.filter-chip.active-filter select{color:white;}
-.cards-list{display:flex;flex-direction:column;gap:.65rem;padding:0 .85rem .5rem;}
-.rec-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:.85rem;}
-.rec-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:.55rem;}
-.rec-worker{display:flex;align-items:center;gap:.5rem;}
-.worker-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold2));display:flex;align-items:center;justify-content:center;font-size:.82rem;font-weight:700;color:white;flex-shrink:0;}
-.worker-name{font-weight:700;font-size:.92rem;}
-.worker-date{font-size:.65rem;color:var(--ink3);}
-.rec-qty{font-size:1.6rem;font-weight:900;color:var(--teal);line-height:1;}
-.rec-qty-lbl{font-size:.6rem;color:var(--ink3);text-align:center;}
-.rec-card-tags{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.6rem;}
-.tag{display:inline-flex;align-items:center;gap:.3rem;padding:.2rem .6rem;border-radius:20px;font-size:.7rem;font-weight:700;}
-.tag-model{background:var(--gold-light);color:var(--gold);border:1px solid rgba(184,137,42,.25);}
-.tag-size{background:var(--teal-light);color:var(--teal);border:1px solid rgba(26,107,92,.25);}
-.tag-color{border:1px solid rgba(0,0,0,.1);}
-.cdot-sm{width:10px;height:10px;border-radius:50%;border:1px solid rgba(0,0,0,.15);flex-shrink:0;}
-.rec-note{font-size:.73rem;color:var(--ink3);background:var(--bg2);border-radius:7px;padding:.3rem .6rem;margin-bottom:.6rem;}
-.rec-actions{display:flex;gap:.5rem;}
-.act-btn{flex:1;padding:.45rem;border:none;border-radius:9px;font-family:'Cairo',sans-serif;font-size:.75rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.3rem;}
-.act-edit{background:var(--gold-light);color:var(--gold);border:1px solid rgba(184,137,42,.3);}
-.act-del{background:var(--rose-light);color:var(--rose);border:1px solid rgba(139,42,58,.2);}
-.empty{text-align:center;padding:3rem 2rem;color:var(--ink3);}
-.empty-icon{font-size:3rem;margin-bottom:.5rem;opacity:.35;}
-.summary-page{padding:.5rem .85rem;}
-.worker-summary-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1rem;margin-bottom:.7rem;}
-.ws-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.7rem;}
-.ws-worker{display:flex;align-items:center;gap:.6rem;}
-.ws-total{font-size:1.6rem;font-weight:900;color:var(--teal);}
-.ws-total-lbl{font-size:.6rem;color:var(--ink3);text-align:center;}
-.ws-models{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:.45rem;}
-.ws-model-item{background:var(--bg2);border-radius:9px;padding:.4rem .5rem;text-align:center;}
-.ws-model-name{font-size:.68rem;color:var(--ink2);font-weight:600;}
-.ws-model-val{font-size:1rem;font-weight:800;color:var(--gold);}
-.ws-bar{height:5px;background:var(--bg2);border-radius:10px;overflow:hidden;}
-.ws-bar-fill{height:100%;border-radius:10px;background:linear-gradient(90deg,var(--teal),var(--teal2));}
-.report-page{padding:.5rem .85rem 0;}
-.report-month-nav{display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:.65rem 1rem;margin-bottom:.85rem;}
-.month-disp{font-family:'Amiri',serif;font-size:1.1rem;font-weight:700;color:var(--gold);}
-.nav-arrow{width:36px;height:36px;border:1px solid var(--border2);background:var(--bg2);border-radius:9px;font-size:1rem;cursor:pointer;color:var(--ink2);}
-.kpi-row{display:grid;grid-template-columns:1fr 1fr;gap:.65rem;margin-bottom:.85rem;}
-.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:.85rem;text-align:center;position:relative;overflow:hidden;}
-.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
-.kpi-card.gold::before{background:linear-gradient(90deg,var(--gold),var(--gold2));}
-.kpi-card.teal::before{background:linear-gradient(90deg,var(--teal),var(--teal2));}
-.kpi-card.rose::before{background:linear-gradient(90deg,var(--rose),#c0392b);}
-.kpi-card.blue::before{background:linear-gradient(90deg,var(--blue),#2980b9);}
-.kpi-card.purple::before{background:linear-gradient(90deg,var(--purple),#7d3cff);}
-.kpi-card.champion::before{background:linear-gradient(90deg,#f5c518,var(--gold));}
-.kpi-card.champion{grid-column:1/-1;}
-.kpi-icon2{font-size:1.3rem;margin-bottom:.2rem;}
-.kpi-num{font-size:1.7rem;font-weight:900;}
-.kpi-card.gold .kpi-num{color:var(--gold);}
-.kpi-card.teal .kpi-num{color:var(--teal);}
-.kpi-card.rose .kpi-num{color:var(--rose);}
-.kpi-card.blue .kpi-num{color:var(--blue);}
-.kpi-card.purple .kpi-num{color:var(--purple);}
-.kpi-card.champion .kpi-num{color:var(--gold);font-size:1.1rem;}
-.kpi-lbl{font-size:.65rem;color:var(--ink3);font-weight:600;margin-top:.15rem;}
-.report-section{background:var(--surface);border:1px solid var(--border);border-radius:14px;margin-bottom:.85rem;overflow:hidden;}
-.rs-header{padding:.65rem 1rem;background:var(--surface2);border-bottom:1px solid var(--border);}
-.rs-title{font-family:'Amiri',serif;font-size:.92rem;font-weight:700;color:var(--ink);}
-.rs-body{padding:.85rem;}
-.bar-chart{display:flex;flex-direction:column;gap:.6rem;}
-.bar-row{display:flex;align-items:center;gap:.65rem;}
-.bar-lbl{font-size:.75rem;font-weight:600;color:var(--ink2);min-width:62px;text-align:right;}
-.bar-track{flex:1;background:var(--bg2);border-radius:20px;height:22px;overflow:hidden;}
-.bar-fill{height:100%;border-radius:20px;display:flex;align-items:center;justify-content:flex-end;}
-.bar-val{font-size:.7rem;font-weight:700;color:white;padding:0 .5rem;white-space:nowrap;}
-.rank-list{display:flex;flex-direction:column;gap:.5rem;}
-.rank-item{display:flex;align-items:center;gap:.7rem;background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:.6rem .8rem;}
-.rank-num{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:900;flex-shrink:0;}
-.r1{background:linear-gradient(135deg,#f5c518,#e6a817);color:#3d2200;}
-.r2{background:linear-gradient(135deg,#c0c0c0,#a0a0a0);color:#2c2c2c;}
-.r3{background:linear-gradient(135deg,#cd7f32,#a56929);color:white;}
-.rn{background:var(--bg2);color:var(--ink2);}
-.rank-av{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold2));display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:700;color:white;}
-.rank-info{flex:1;}
-.rank-name{font-weight:700;font-size:.86rem;}
-.rank-sub{font-size:.65rem;color:var(--ink3);}
-.rank-total{font-size:1.1rem;font-weight:900;color:var(--teal);}
-.color-list{display:flex;flex-direction:column;gap:.45rem;}
-.color-row{display:flex;align-items:center;gap:.6rem;}
-.cswatch{width:16px;height:16px;border-radius:4px;border:1.5px solid rgba(0,0,0,.12);flex-shrink:0;}
-.cname{font-size:.78rem;font-weight:600;color:var(--ink2);flex:1;}
-.ctrack{flex:2;background:var(--bg2);border-radius:10px;height:9px;overflow:hidden;}
-.cfill{height:100%;border-radius:10px;}
-.ccnt{font-size:.72rem;font-weight:700;color:var(--ink);min-width:32px;text-align:left;}
-.size-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:.4rem;margin-bottom:.7rem;}
-.size-item{background:var(--bg2);border-radius:9px;padding:.5rem .3rem;text-align:center;}
-.size-lbl{font-size:.72rem;font-weight:700;color:var(--teal);}
-.size-val{font-size:1rem;font-weight:900;}
-.size-pct{font-size:.6rem;color:var(--ink3);}
-.daily-cards{display:flex;flex-direction:column;gap:.5rem;}
-.day-card{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:.65rem .85rem;display:flex;align-items:center;gap:.8rem;}
-.day-date{min-width:65px;}
-.day-d{font-size:.82rem;font-weight:700;color:var(--ink);}
-.day-dow{font-size:.62rem;color:var(--ink3);}
-.day-bar-wrap{flex:1;}
-.day-bar-track{background:var(--bg2);border-radius:10px;height:10px;margin-top:.25rem;overflow:hidden;}
-.day-bar-fill{height:100%;border-radius:10px;background:linear-gradient(90deg,var(--teal),var(--teal2));}
-.day-qty{font-size:1.1rem;font-weight:900;color:var(--teal);}
-.peak-chip{background:var(--gold-light);color:var(--gold);border-radius:5px;padding:.1rem .35rem;font-size:.6rem;font-weight:700;}
-.export-btn-full{width:100%;padding:.85rem;background:linear-gradient(135deg,var(--blue),#2060b0);border:none;border-radius:13px;font-family:'Cairo',sans-serif;font-size:.9rem;font-weight:700;color:white;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.5rem;margin-bottom:.85rem;}
-.settings-page{padding:.5rem .85rem;}
-.settings-section{background:var(--surface);border:1px solid var(--border);border-radius:14px;margin-bottom:.85rem;overflow:hidden;}
-.settings-section-title{padding:.65rem 1rem;background:var(--surface2);border-bottom:1px solid var(--border);font-family:'Amiri',serif;font-size:.92rem;font-weight:700;color:var(--ink);}
-.settings-item{display:flex;align-items:center;justify-content:space-between;padding:.75rem 1rem;border-bottom:1px solid var(--border);}
-.si-name{font-size:.88rem;font-weight:600;}
-.si-sub{font-size:.68rem;color:var(--ink3);}
-.si-del{width:32px;height:32px;border:none;background:var(--rose-light);color:var(--rose);border-radius:8px;font-size:.85rem;cursor:pointer;}
-.add-item-row{padding:.7rem 1rem;}
-.add-item-row input[type=text]{width:100%;padding:.55rem .85rem;background:var(--bg2);border:1px solid var(--border2);border-radius:9px;font-family:'Cairo',sans-serif;font-size:.88rem;color:var(--ink);outline:none;}
-.add-item-btn{width:100%;margin-top:.4rem;padding:.55rem;background:var(--gold-light);border:1px solid rgba(184,137,42,.4);border-radius:9px;font-family:'Cairo',sans-serif;font-size:.82rem;font-weight:700;color:var(--gold);cursor:pointer;}
-.overlay{position:fixed;inset:0;background:rgba(44,26,14,.55);display:none;align-items:flex-end;justify-content:center;z-index:200;}
-.overlay.show{display:flex;}
-.sheet{background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-height:92vh;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 0 calc(1rem + var(--safe-b));}
-.sheet-handle{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:.75rem auto .5rem;}
-.sheet-title{font-family:'Amiri',serif;font-size:1.1rem;font-weight:700;color:var(--gold);padding:.3rem 1.2rem .8rem;border-bottom:1px solid var(--border);}
-.sheet-body{padding:1rem 1.2rem;}
-.form-group{margin-bottom:.9rem;}
-.form-group label{display:block;font-size:.73rem;font-weight:700;color:var(--ink2);margin-bottom:.3rem;}
-.form-group input,.form-group select{width:100%;padding:.65rem .9rem;background:var(--bg2);border:1.5px solid var(--border2);border-radius:11px;font-family:'Cairo',sans-serif;font-size:1rem;color:var(--ink);outline:none;-webkit-appearance:none;}
-.form-group input:focus,.form-group select:focus{border-color:var(--gold);}
-.form-grid2{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;}
-.color-picker{display:flex;flex-wrap:wrap;gap:.45rem;margin-top:.3rem;}
-.cpick{display:flex;flex-direction:column;align-items:center;gap:.2rem;padding:.35rem .4rem;border-radius:9px;cursor:pointer;border:2px solid transparent;min-width:50px;font-size:.62rem;font-weight:600;color:var(--ink2);}
-.cpick.active{border-color:var(--gold);background:var(--gold-light);}
-.cpick .cdot{width:22px;height:22px;border-radius:50%;border:2px solid rgba(0,0,0,.15);}
-.sheet-btns{display:flex;gap:.65rem;margin-top:1rem;}
-.sbtn{flex:1;padding:.75rem;border:none;border-radius:12px;font-family:'Cairo',sans-serif;font-size:.88rem;font-weight:700;cursor:pointer;}
-.sbtn-gold{background:linear-gradient(135deg,var(--gold),var(--gold2));color:white;}
-.sbtn-ghost{background:var(--bg2);color:var(--ink2);border:1px solid var(--border2);}
-.sbtn-danger{background:var(--rose);color:white;}
-.confirm-icon{font-size:2.5rem;text-align:center;margin:.5rem 0;}
-.confirm-msg{text-align:center;color:var(--ink2);font-size:.9rem;line-height:1.6;margin-bottom:1rem;}
-.toast{position:fixed;bottom:calc(var(--nav-h) + var(--safe-b) + .8rem);left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:white;border-radius:25px;padding:.65rem 1.4rem;font-size:.83rem;font-weight:600;transition:all .3s ease;z-index:900;opacity:0;pointer-events:none;white-space:nowrap;}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-.toast.success{background:var(--teal);}
-.toast.error{background:var(--rose);}
-.toast.info{background:var(--gold);}
+  :root {
+    --gold: #c9a84c;
+    --gold-light: #e8c97a;
+    --gold-dark: #8a6f2e;
+    --cream: #fdf6e3;
+    --cream-dark: #f5e9c8;
+    --brown: #3d2b1f;
+    --brown-light: #6b4c38;
+    --emerald: #1a6b4a;
+    --emerald-light: #2d9b6d;
+    --red-soft: #c0392b;
+    --shadow: rgba(61,43,31,0.15);
+    --radius: 14px;
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: 'Cairo', sans-serif;
+    background: var(--cream);
+    color: var(--brown);
+    min-height: 100dvh;
+    background-image:
+      radial-gradient(ellipse at 10% 10%, rgba(201,168,76,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse at 90% 90%, rgba(26,107,74,0.06) 0%, transparent 60%);
+    overflow-x: hidden;
+  }
+
+  /* ====== CLOUD STATUS ====== */
+  .cloud-bar {
+    background: var(--emerald);
+    color: white;
+    text-align: center;
+    padding: 5px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .cloud-bar.offline { background: #e67e22; }
+  .cloud-bar.local   { background: #7f8c8d; }
+  .cloud-dot { width: 7px; height: 7px; border-radius: 50%; background: #fff; animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  /* ====== LOGIN ====== */
+  #login-screen {
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(160deg, var(--brown) 0%, #2a1c12 50%, #1a0f08 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 24px;
+  }
+  #login-screen.hidden { display: none; }
+  .login-box {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(201,168,76,0.25);
+    border-radius: 24px;
+    padding: 40px 28px;
+    width: 100%;
+    max-width: 360px;
+    text-align: center;
+    backdrop-filter: blur(10px);
+    animation: loginIn 0.5s ease;
+  }
+  @keyframes loginIn { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
+  .login-logo { font-size: 3.5rem; display: block; margin-bottom: 8px; }
+  .login-title { font-family:'Amiri',serif; font-size:2rem; color:var(--gold-light); margin-bottom:4px; }
+  .login-sub { font-size:0.78rem; color:rgba(232,201,122,0.5); margin-bottom:28px; }
+  .login-label { display:block; font-size:0.8rem; color:var(--gold); font-weight:700; text-align:right; margin-bottom:7px; }
+  .login-input-wrap { position:relative; margin-bottom:18px; }
+  .login-input {
+    width:100%; padding:13px 18px 13px 48px;
+    background:rgba(255,255,255,0.06); border:1.5px solid rgba(201,168,76,0.3);
+    border-radius:12px; font-family:'Cairo',sans-serif; font-size:1.1rem;
+    color:var(--gold-light); outline:none; text-align:center; letter-spacing:4px; transition:border-color 0.2s;
+  }
+  .login-input::placeholder { letter-spacing:0; font-size:0.85rem; color:rgba(232,201,122,0.3); }
+  .login-input:focus { border-color:var(--gold); }
+  .login-eye {
+    position:absolute; left:14px; top:50%; transform:translateY(-50%);
+    background:none; border:none; color:rgba(232,201,122,0.5); font-size:1.2rem; cursor:pointer; padding:4px;
+  }
+  .login-btn {
+    width:100%; padding:14px;
+    background:linear-gradient(135deg,var(--gold-dark),var(--gold),var(--gold-dark));
+    color:var(--brown); border:none; border-radius:12px;
+    font-family:'Cairo',sans-serif; font-size:1rem; font-weight:900; cursor:pointer;
+    box-shadow:0 4px 20px rgba(201,168,76,0.3); transition:all 0.2s;
+  }
+  .login-btn:active { transform:scale(0.98); }
+  .login-error { color:#e74c3c; font-size:0.8rem; margin-top:10px; min-height:18px; }
+  .login-ornament { color:rgba(201,168,76,0.3); font-size:0.9rem; letter-spacing:8px; margin-top:24px; }
+
+  /* ====== HEADER ====== */
+  header {
+    background:linear-gradient(135deg,var(--brown) 0%,#5c3d2b 60%,var(--brown-light) 100%);
+    color:var(--gold-light); padding:14px 14px 12px; position:sticky; top:0; z-index:100;
+    box-shadow:0 4px 20px rgba(0,0,0,0.3);
+  }
+  header::before {
+    content:''; position:absolute; inset:0;
+    background:repeating-linear-gradient(45deg,transparent,transparent 20px,rgba(201,168,76,0.04) 20px,rgba(201,168,76,0.04) 40px);
+    pointer-events:none;
+  }
+  .header-inner { position:relative; display:flex; align-items:center; justify-content:space-between; max-width:800px; margin:0 auto; }
+  .header-center { text-align:center; flex:1; }
+  .header-center h1 { font-family:'Amiri',serif; font-size:1.5rem; font-weight:700; color:var(--gold-light); text-shadow:0 2px 8px rgba(0,0,0,0.4); }
+  .header-center p { font-size:0.72rem; color:rgba(232,201,122,0.6); margin-top:1px; }
+  .btn-logout { background:rgba(255,255,255,0.06); border:1px solid rgba(201,168,76,0.3); color:rgba(232,201,122,0.7); padding:7px 10px; border-radius:8px; font-size:0.72rem; font-family:'Cairo',sans-serif; cursor:pointer; transition:all 0.2s; }
+  .btn-logout:hover { background:rgba(201,168,76,0.15); color:var(--gold-light); }
+
+  /* ====== MAIN ====== */
+  .main { max-width:800px; margin:0 auto; padding:14px 12px calc(78px + var(--safe-bottom)); }
+
+  /* ====== CARDS ====== */
+  .form-card {
+    background:white; border-radius:var(--radius); padding:18px 15px;
+    box-shadow:0 2px 16px var(--shadow); border:1px solid rgba(201,168,76,0.18);
+    margin-bottom:14px; position:relative; overflow:hidden;
+  }
+  .form-card::before { content:''; position:absolute; top:0;right:0;left:0; height:3px; background:linear-gradient(90deg,var(--gold-dark),var(--gold),var(--gold-dark)); }
+  .form-card h2 { font-family:'Amiri',serif; font-size:1.1rem; color:var(--brown); margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+
+  .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:11px; margin-bottom:14px; }
+  .form-group { display:flex; flex-direction:column; gap:5px; }
+  .form-group label { font-size:0.76rem; font-weight:700; color:var(--brown-light); }
+  .form-group input, .form-group select {
+    padding:11px 12px; border:1.5px solid #e0d5c0; border-radius:10px;
+    font-family:'Cairo',sans-serif; font-size:0.95rem; color:var(--brown); background:var(--cream);
+    outline:none; width:100%; -webkit-appearance:none; transition:border-color 0.2s;
+  }
+  .form-group input:focus, .form-group select:focus { border-color:var(--gold); background:white; }
+
+  .btn-primary {
+    background:linear-gradient(135deg,var(--brown),var(--brown-light));
+    color:var(--gold-light); border:none; padding:13px 22px; border-radius:10px;
+    font-family:'Cairo',sans-serif; font-size:0.95rem; font-weight:700; cursor:pointer;
+    box-shadow:0 3px 12px rgba(61,43,31,0.25); display:inline-flex; align-items:center; justify-content:center; gap:7px; min-height:48px; transition:all 0.2s;
+  }
+  .btn-primary:active { transform:scale(0.97); }
+  .btn-full { width:100%; margin-top:4px; }
+
+  /* ====== SETTINGS ====== */
+  .settings-toggle {
+    display:inline-flex; align-items:center; gap:6px;
+    background:none; border:1.5px dashed rgba(201,168,76,0.5); color:var(--gold-dark);
+    padding:9px 14px; border-radius:8px; font-family:'Cairo',sans-serif; font-size:0.82rem; cursor:pointer; min-height:42px;
+  }
+  .settings-panel { display:none; margin-top:12px; padding:14px; background:var(--cream); border-radius:10px; border:1px solid rgba(201,168,76,0.25); }
+  .settings-panel.open { display:block; }
+  .settings-panel h3 { font-size:0.82rem; font-weight:700; color:var(--brown); margin-bottom:9px; }
+  .settings-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  @media(max-width:420px){ .settings-grid { grid-template-columns:1fr; } }
+  .tags-row { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:9px; }
+  .tag { background:white; border:1.5px solid var(--gold); color:var(--brown); border-radius:20px; padding:4px 10px; font-size:0.78rem; font-weight:600; display:inline-flex; align-items:center; gap:5px; }
+  .tag .tag-del { cursor:pointer; color:var(--red-soft); font-size:0.82rem; }
+  .add-tag-row { display:flex; gap:7px; }
+  .add-tag-row input { flex:1; padding:8px 10px; border:1.5px solid #ccc; border-radius:8px; font-family:'Cairo',sans-serif; font-size:0.82rem; outline:none; }
+  .add-tag-row input:focus { border-color:var(--gold); }
+  .btn-add-tag { background:var(--emerald); color:white; border:none; padding:8px 12px; border-radius:8px; font-family:'Cairo',sans-serif; font-size:0.82rem; cursor:pointer; white-space:nowrap; }
+
+  /* ====== STATS ====== */
+  .stats-row { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:14px; }
+  .stat-card { background:white; border-radius:12px; padding:13px 10px; text-align:center; box-shadow:0 2px 10px var(--shadow); border:1px solid rgba(201,168,76,0.12); position:relative; overflow:hidden; }
+  .stat-card::after { content:''; position:absolute; bottom:0;left:0;right:0; height:3px; }
+  .stat-card.gold::after { background:var(--gold); }
+  .stat-card.green::after { background:var(--emerald); }
+  .stat-card.brown::after { background:var(--brown); }
+  .stat-card .stat-num { font-size:1.55rem; font-weight:900; color:var(--brown); line-height:1; }
+  .stat-card .stat-label { font-size:0.66rem; color:#999; margin-top:4px; }
+
+  /* ====== TABLE ====== */
+  .table-card { background:white; border-radius:var(--radius); box-shadow:0 2px 16px var(--shadow); border:1px solid rgba(201,168,76,0.18); overflow:hidden; margin-bottom:14px; }
+  .table-header-bar { padding:13px 15px; background:linear-gradient(135deg,var(--brown),var(--brown-light)); color:var(--gold-light); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:7px; }
+  .table-header-bar h2 { font-family:'Amiri',serif; font-size:1rem; display:flex; align-items:center; gap:7px; }
+  .total-badge { background:var(--gold); color:var(--brown); padding:3px 11px; border-radius:20px; font-size:0.78rem; font-weight:900; }
+  .search-bar { padding:9px 12px; border-bottom:1px solid #f0e8d0; display:flex; gap:7px; background:var(--cream); }
+  .search-bar input { flex:1; min-width:100px; padding:9px 11px; border:1.5px solid #ddd; border-radius:8px; font-family:'Cairo',sans-serif; font-size:0.85rem; outline:none; background:white; }
+  .search-bar input:focus { border-color:var(--gold); }
+  .search-bar select { padding:9px 9px; border:1.5px solid #ddd; border-radius:8px; font-family:'Cairo',sans-serif; font-size:0.8rem; background:white; color:var(--brown); outline:none; -webkit-appearance:none; }
+
+  /* record cards */
+  .records-list { padding:8px; }
+  .record-item { background:var(--cream); border:1px solid rgba(201,168,76,0.18); border-radius:10px; padding:11px 13px; margin-bottom:7px; display:flex; align-items:center; gap:7px; }
+  .record-info { flex:1; min-width:0; }
+  .record-model { font-weight:700; color:var(--brown); font-size:0.92rem; }
+  .record-tailor { font-size:0.76rem; color:var(--brown-light); margin-top:2px; }
+  .record-meta { font-size:0.7rem; color:#aaa; margin-top:1px; }
+  .record-count { font-size:1.55rem; font-weight:900; color:var(--emerald); min-width:34px; text-align:center; flex-shrink:0; }
+  .record-actions { display:flex; flex-direction:column; gap:5px; flex-shrink:0; }
+  .btn-edit, .btn-del { border:none; border-radius:7px; padding:6px 10px; cursor:pointer; font-size:0.76rem; font-family:'Cairo',sans-serif; font-weight:600; min-height:34px; display:inline-flex; align-items:center; gap:3px; }
+  .btn-edit { background:#e8f4fd; color:#2980b9; border:1px solid #aed6f1; }
+  .btn-del  { background:#fdecea; color:var(--red-soft); border:1px solid #f5c6cb; }
+  .empty-state { text-align:center; padding:45px 20px; color:#bbb; }
+  .empty-state .empty-icon { font-size:2.8rem; margin-bottom:10px; }
+  .empty-state p { font-size:0.88rem; }
+
+  /* ====== MODAL ====== */
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:flex-end; justify-content:center; backdrop-filter:blur(3px); }
+  .modal-overlay.open { display:flex; }
+  @media(min-width:600px){ .modal-overlay { align-items:center; } }
+  .modal { background:white; border-radius:20px 20px 0 0; padding:24px 18px calc(18px + var(--safe-bottom)); width:100%; max-width:480px; box-shadow:0 -8px 40px rgba(0,0,0,0.2); position:relative; animation:slideUp 0.25s ease; max-height:90vh; overflow-y:auto; }
+  @media(min-width:600px){ .modal { border-radius:20px; padding:28px; max-height:none; animation:modalIn 0.25s ease; } }
+  @keyframes slideUp { from{opacity:0;transform:translateY(40px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes modalIn { from{opacity:0;transform:scale(0.92) translateY(10px)} to{opacity:1;transform:scale(1) translateY(0)} }
+  .modal-handle { width:40px; height:4px; background:#ddd; border-radius:2px; margin:0 auto 18px; }
+  @media(min-width:600px){ .modal-handle { display:none; } }
+  .modal h2 { font-family:'Amiri',serif; font-size:1.25rem; color:var(--brown); margin-bottom:18px; padding-bottom:12px; border-bottom:2px solid var(--cream-dark); }
+  .modal-close { position:absolute; top:13px; left:13px; background:none; border:none; font-size:1.3rem; cursor:pointer; color:#aaa; padding:6px; }
+  .modal-close:hover { color:var(--red-soft); }
+  .modal-actions { display:flex; gap:10px; margin-top:18px; justify-content:flex-end; }
+  .btn-cancel { background:#f0f0f0; color:#666; border:none; padding:12px 20px; border-radius:8px; font-family:'Cairo',sans-serif; font-weight:600; cursor:pointer; min-height:46px; }
+
+  /* ====== TOAST ====== */
+  .toast { position:fixed; bottom:calc(20px + var(--safe-bottom)); left:50%; transform:translateX(-50%) translateY(80px); background:var(--brown); color:var(--gold-light); padding:11px 22px; border-radius:50px; font-size:0.86rem; font-weight:600; box-shadow:0 8px 24px rgba(0,0,0,0.25); z-index:9999; transition:transform 0.3s ease; white-space:nowrap; max-width:92vw; text-align:center; }
+  .toast.show { transform:translateX(-50%) translateY(0); }
+
+  /* ====== REPORT ====== */
+  .rep-filter-grid { display:grid; grid-template-columns:1fr 1fr; gap:11px; margin-bottom:12px; }
+  .rep-stats-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px; }
+  table { width:100%; border-collapse:collapse; }
+  thead tr { background:var(--cream-dark); border-bottom:2px solid rgba(201,168,76,0.3); }
+  thead th { padding:9px 11px; text-align:right; font-size:0.76rem; font-weight:700; color:var(--brown-light); white-space:nowrap; }
+  tbody tr { border-bottom:1px solid #f5ead8; }
+  tbody tr:hover { background:rgba(201,168,76,0.05); }
+  tbody td { padding:10px 11px; font-size:0.85rem; vertical-align:middle; }
+  tfoot tr { background:linear-gradient(135deg,var(--brown),var(--brown-light)); color:var(--gold-light); font-weight:700; }
+  tfoot td { padding:10px 11px; font-size:0.82rem; }
+  .td-model { font-weight:700; color:var(--brown); }
+  .td-tailor { color:var(--brown-light); }
+  .diff-pos { color:var(--red-soft); font-weight:700; }
+  .diff-zero { color:var(--emerald); font-weight:700; }
+  .diff-neg { color:#2980b9; font-weight:700; }
+  .rep-bar-wrap { background:#f0f0f0; border-radius:20px; height:7px; width:50px; overflow:hidden; display:inline-block; vertical-align:middle; margin-right:5px; }
+  .rep-bar-fill { height:100%; border-radius:20px; background:linear-gradient(90deg,var(--emerald),var(--emerald-light)); transition:width 0.5s; }
+
+  /* ====== BACKUP ====== */
+  .backup-card { background:white; border-radius:var(--radius); padding:18px 15px; box-shadow:0 2px 16px var(--shadow); border:1px solid rgba(201,168,76,0.18); margin-bottom:14px; position:relative; overflow:hidden; }
+  .backup-card::before { content:''; position:absolute; top:0;right:0;left:0; height:3px; }
+  .backup-card.green::before { background:linear-gradient(90deg,var(--emerald),#2d9b6d); }
+  .backup-card.gold::before  { background:linear-gradient(90deg,var(--gold-dark),var(--gold)); }
+  .backup-card h2 { font-family:'Amiri',serif; font-size:1.08rem; color:var(--brown); margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+  .backup-btns { display:grid; grid-template-columns:1fr 1fr; gap:9px; }
+  .btn-backup { padding:14px 10px; border-radius:10px; font-family:'Cairo',sans-serif; font-size:0.8rem; font-weight:700; cursor:pointer; border:none; display:flex; flex-direction:column; align-items:center; gap:6px; min-height:68px; justify-content:center; transition:all 0.2s; color:white; }
+  .btn-backup .b-icon { font-size:1.5rem; }
+  .btn-backup:active { transform:scale(0.97); }
+  .btn-backup.export-json { background:linear-gradient(135deg,#1a6b4a,#2d9b6d); }
+  .btn-backup.import-json { background:linear-gradient(135deg,#2471a3,#3498db); }
+  .btn-backup.export-xl   { background:linear-gradient(135deg,#145a32,#1e8449); }
+  .btn-backup.reset-data  { background:linear-gradient(135deg,#7b241c,#c0392b); }
+  .backup-info { font-size:0.72rem; color:#999; margin-top:12px; padding-top:11px; border-top:1px dashed #eee; text-align:center; }
+
+  /* firebase status in backup */
+  .firebase-status { display:flex; align-items:center; gap:8px; padding:11px 14px; border-radius:10px; font-size:0.8rem; font-weight:700; margin-bottom:14px; }
+  .firebase-status.connected    { background:#d5f5e3; color:#1a6b4a; border:1px solid #a9dfbf; }
+  .firebase-status.disconnected { background:#fdecea; color:#c0392b; border:1px solid #f5c6cb; }
+  .firebase-status.local        { background:#fef9e7; color:#856404; border:1px solid #ffd700; }
+
+  /* pwd */
+  .pwd-form { display:grid; gap:9px; margin-top:10px; }
+  .pwd-form input { padding:11px 13px; border:1.5px solid #ddd; border-radius:8px; font-family:'Cairo',sans-serif; font-size:0.9rem; outline:none; background:var(--cream); }
+  .pwd-form input:focus { border-color:var(--gold); background:white; }
+
+  /* ====== BOTTOM NAV ====== */
+  .bottom-nav { position:fixed; bottom:0; left:0; right:0; background:white; border-top:1px solid rgba(201,168,76,0.2); display:flex; z-index:200; padding-bottom:var(--safe-bottom); box-shadow:0 -4px 20px rgba(0,0,0,0.08); }
+  .nav-btn { flex:1; padding:10px 4px 8px; background:none; border:none; font-family:'Cairo',sans-serif; font-size:0.62rem; color:#aaa; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:2px; transition:all 0.2s; position:relative; }
+  .nav-btn .nav-icon { font-size:1.3rem; }
+  .nav-btn.active { color:var(--brown); }
+  .nav-btn.active::before { content:''; position:absolute; top:0;left:20%;right:20%; height:2.5px; background:var(--gold); border-radius:0 0 3px 3px; }
+  .nav-badge { position:absolute; top:4px; right:calc(50% - 18px); background:var(--gold); color:var(--brown); border-radius:10px; padding:0 5px; font-size:0.58rem; font-weight:900; min-width:15px; text-align:center; }
+
+  /* ====== INSTALL BANNER ====== */
+  #install-banner {
+    display:none; position:fixed; bottom:calc(68px + var(--safe-bottom)); left:12px; right:12px;
+    background:var(--brown); color:var(--gold-light); border-radius:14px; padding:14px 16px;
+    box-shadow:0 8px 30px rgba(0,0,0,0.3); z-index:500; flex-direction:column; gap:10px;
+    animation:slideUp 0.3s ease;
+  }
+  #install-banner.visible { display:flex; }
+  .install-banner-row { display:flex; align-items:center; gap:10px; }
+  .install-banner-icon { font-size:2rem; }
+  .install-banner-text h3 { font-size:0.92rem; font-weight:900; }
+  .install-banner-text p { font-size:0.72rem; color:rgba(232,201,122,0.7); margin-top:2px; }
+  .install-banner-btns { display:flex; gap:8px; }
+  .btn-install { flex:1; padding:11px; background:var(--gold); color:var(--brown); border:none; border-radius:9px; font-family:'Cairo',sans-serif; font-weight:900; font-size:0.88rem; cursor:pointer; }
+  .btn-install-dismiss { padding:11px 14px; background:rgba(255,255,255,0.08); color:rgba(232,201,122,0.7); border:none; border-radius:9px; font-family:'Cairo',sans-serif; font-size:0.82rem; cursor:pointer; }
+
+  #hidden-file-input { display:none; }
+
+  /* ====== SYNC INDICATOR ====== */
+  .sync-dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:#2d9b6d; margin-right:4px; }
+  .sync-dot.syncing { animation:pulse 0.8s infinite; background:var(--gold); }
+  .sync-dot.error { background:#c0392b; animation:none; }
 </style>
 </head>
 <body>
 
-<div id="screen-loading">
-  <div class="loading-icon">🧵</div>
-  <div class="loading-text">ورشة الخياطة</div>
-  <div class="loading-sub">جاري الاتصال بالسحابة...</div>
-  <div class="loading-bar"><div class="loading-bar-fill"></div></div>
-</div>
-
-<div id="screen-home">
-  <div class="home-logo">
-    <div class="home-logo-icon">🧵</div>
-    <div class="home-logo-title">ورشة الخياطة</div>
-    <div class="home-logo-sub">اختر نوع الدخول</div>
-  </div>
-  <div style="display:flex;flex-direction:column;gap:.85rem;width:100%;max-width:420px">
-    <button class="admin-login-btn" style="background:rgba(26,107,92,.25);border-color:rgba(26,107,92,.5);color:#a8e6d8;font-size:1rem;padding:1.1rem" onclick="openUserLogin()">
-      👤 دخول المستخدم
-    </button>
-    <div class="home-divider" style="margin:0">
-      <div class="home-divider-line"></div>
-      <div class="home-divider-text">أو</div>
-      <div class="home-divider-line"></div>
+<!-- ====== LOGIN ====== -->
+<div id="login-screen">
+  <div class="login-box">
+    <span class="login-logo">🪡</span>
+    <h1 class="login-title">ش الخياطة</h1>
+    <p class="login-sub">سجل الجبب الصادرة والواردة</p>
+    <label class="login-label">🔑 كلمة المرور</label>
+    <div class="login-input-wrap">
+      <input type="password" id="pwd-inp" class="login-input" placeholder="أدخل كلمة المرور..." autocomplete="current-password">
+      <button class="login-eye" onclick="togglePwdVis('pwd-inp',this)" type="button">👁</button>
     </div>
-    <button class="admin-login-btn" onclick="openAdminLogin()">🔐 دخول المدير</button>
+    <button class="login-btn" onclick="doLogin()">دخول ←</button>
+    <div class="login-error" id="login-error"></div>
+    <div class="login-ornament">✦ ✦ ✦</div>
   </div>
 </div>
 
-<div class="admin-pw-sheet" id="adminLoginSheet">
-  <div class="admin-pw-box">
-    <div class="apw-handle"></div>
-    <div class="apw-icon">🔐</div>
-    <div class="apw-title">دخول المدير</div>
-    <input class="apw-input" type="password" id="adminPw" placeholder="كلمة السر" autocomplete="off" onkeydown="if(event.key==='Enter')tryAdminLogin()">
-    <div class="apw-err" id="adminPwErr">❌ كلمة السر غير صحيحة</div>
-    <div class="apw-btns">
-      <button class="apw-cancel" onclick="closeAdminLogin()">إلغاء</button>
-      <button class="apw-submit" onclick="tryAdminLogin()">🔓 دخول</button>
+<!-- ====== CLOUD BAR ====== -->
+<div class="cloud-bar local" id="cloud-bar">
+  <span class="cloud-dot"></span>
+  <span id="cloud-status-text">وضع محلي — لم يتم ربط Firebase بعد</span>
+</div>
+
+<!-- ====== HEADER ====== -->
+<header>
+  <div class="header-inner">
+    <div style="width:60px"></div>
+    <div class="header-center">
+      <h1>🪡 ورشة الخياطة</h1>
+      <p>سجل الجبب الصادرة والواردة</p>
+    </div>
+    <button class="btn-logout" onclick="doLogout()">خروج 🚪</button>
+  </div>
+</header>
+
+<!-- ====== BOTTOM NAV ====== -->
+<nav class="bottom-nav">
+  <button class="nav-btn active" onclick="switchTab('out')" id="nav-out">
+    <span class="nav-icon">📤</span>
+    خارج
+    <span class="nav-badge" id="count-out">0</span>
+  </button>
+  <button class="nav-btn" onclick="switchTab('in')" id="nav-in">
+    <span class="nav-icon">📥</span>
+    داخل
+    <span class="nav-badge" id="count-in">0</span>
+  </button>
+  <button class="nav-btn" onclick="switchTab('report')" id="nav-report">
+    <span class="nav-icon">📊</span>
+    تقرير
+  </button>
+  <button class="nav-btn" onclick="switchTab('backup')" id="nav-backup">
+    <span class="nav-icon">💾</span>
+    إعدادات
+  </button>
+</nav>
+
+<!-- ====== INSTALL BANNER ====== -->
+<div id="install-banner">
+  <div class="install-banner-row">
+    <span class="install-banner-icon">📲</span>
+    <div class="install-banner-text">
+      <h3>ثبّت التطبيق على هاتفك</h3>
+      <p>يعمل بدون إنترنت ويُحفظ على الشاشة الرئيسية</p>
     </div>
   </div>
-</div>
-
-<!-- ══ USER LOGIN SHEET ══ -->
-<div class="admin-pw-sheet" id="userLoginSheet">
-  <div class="admin-pw-box">
-    <div class="apw-handle"></div>
-    <div class="apw-icon">👤</div>
-    <div class="apw-title">دخول المستخدم</div>
-    <input class="apw-input" type="password" id="userPw" placeholder="كلمة السر" autocomplete="off" onkeydown="if(event.key==='Enter')tryUserLogin()">
-    <div class="apw-err" id="userPwErr">❌ كلمة السر غير صحيحة</div>
-    <div class="apw-btns">
-      <button class="apw-cancel" onclick="closeUserLogin()">إلغاء</button>
-      <button class="apw-submit" style="background:linear-gradient(135deg,var(--teal),var(--teal2));border-color:var(--teal)" onclick="tryUserLogin()">🔓 دخول</button>
-    </div>
+  <div class="install-banner-btns">
+    <button class="btn-install" onclick="installApp()">📲 تثبيت الآن</button>
+    <button class="btn-install-dismiss" onclick="dismissInstall()">لاحقاً</button>
   </div>
 </div>
 
-<div id="screen-workerApp">
-  <div class="worker-topbar">
-    <div class="wt-info">
-      <div class="wt-avatar" id="workerAvatar">؟</div>
-      <div>
-        <div class="wt-name" id="workerName">—</div>
-        <div class="wt-role" id="workerRole">مستخدم</div>
+<!-- ====== MAIN ====== -->
+<div class="main">
+
+  <div class="stats-row" id="stats-row">
+    <div class="stat-card green">
+      <div class="stat-num" id="stat-out">0</div>
+      <div class="stat-label">خارج</div>
+    </div>
+    <div class="stat-card brown">
+      <div class="stat-num" id="stat-in">0</div>
+      <div class="stat-label">عادت</div>
+    </div>
+  </div>
+
+  <!-- FORM SECTION -->
+  <div id="form-section">
+    <div class="form-card">
+      <h2 id="form-title">✏️ تسجيل جبة — خارج من الورشة</h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>📐 الموديل</label>
+          <select id="inp-model"><option value="">— اختر —</option></select>
+        </div>
+        <div class="form-group">
+          <label>🧵 الخياط</label>
+          <select id="inp-tailor"><option value="">— اختر —</option></select>
+        </div>
+        <div class="form-group">
+          <label>🔢 العدد</label>
+          <input type="number" id="inp-count" min="1" placeholder="مثلاً: 5" inputmode="numeric">
+        </div>
+        <div class="form-group">
+          <label>📅 التاريخ</label>
+          <input type="date" id="inp-date">
+        </div>
       </div>
-    </div>
-    <div class="wt-stats">
-      <div class="wt-stat"><div class="wt-stat-val" id="workerTodayQty">0</div><div class="wt-stat-lbl">اليوم</div></div>
-      <div class="wt-stat"><div class="wt-stat-val" id="workerTotalQty">0</div><div class="wt-stat-lbl">الكل</div></div>
-      <button class="exit-btn" onclick="goHome()">← خروج</button>
-    </div>
-  </div>
-  <div class="worker-scroll">
-    <div class="quick-add-card">
-      <div class="qac-header"><span>➕</span><div class="qac-header-title">تسجيل إنتاج جديد</div></div>
-      <div class="qac-body">
-        <div class="wform-grid2">
-          <div class="wform-group"><label>الموديل *</label><select id="wf_model"></select></div>
-          <div class="wform-group"><label>المقاس *</label>
-            <select id="wf_size"><option>M</option><option>L</option><option selected>XL</option><option>XXL</option><option>3XL</option></select>
+      <button class="btn-primary btn-full" onclick="addRecord()">➕ إضافة السجل</button>
+      <div style="margin-top:11px;">
+        <button class="settings-toggle" onclick="toggleSettings()">⚙️ إدارة الموديلات والخياطين</button>
+      </div>
+      <div class="settings-panel" id="settings-panel">
+        <div class="settings-grid">
+          <div>
+            <h3>📐 الموديلات</h3>
+            <div class="tags-row" id="models-tags"></div>
+            <div class="add-tag-row">
+              <input type="text" id="new-model" placeholder="موديل جديد...">
+              <button class="btn-add-tag" onclick="addModel()">+ إضافة</button>
+            </div>
+          </div>
+          <div>
+            <h3>🧵 الخياطين</h3>
+            <div class="tags-row" id="tailors-tags"></div>
+            <div class="add-tag-row">
+              <input type="text" id="new-tailor" placeholder="خياط جديد...">
+              <button class="btn-add-tag" onclick="addTailor()">+ إضافة</button>
+            </div>
           </div>
         </div>
-        <div class="wform-group"><label>التاريخ *</label><input type="date" id="wf_date"></div>
-        <div class="wform-group">
-          <label>العدد *</label>
-          <div class="qty-control">
-            <button class="qty-btn" onclick="changeWQty(-1)">−</button>
-            <div class="qty-val" id="wQtyDisplay">1</div>
-            <button class="qty-btn" onclick="changeWQty(1)">+</button>
-          </div>
-          <input type="hidden" id="wf_qty" value="1">
+      </div>
+    </div>
+
+    <div class="table-card">
+      <div class="table-header-bar">
+        <h2 id="table-title">📤 الجبب خارج من الورشة</h2>
+        <span class="total-badge" id="table-total">المجموع: 0 جبة</span>
+      </div>
+      <div class="search-bar">
+        <input type="text" id="search-inp" placeholder="🔍 بحث..." oninput="renderTable()">
+        <select id="filter-tailor" onchange="renderTable()"><option value="">كل الخياطين</option></select>
+      </div>
+      <div class="records-list" id="records-list"></div>
+    </div>
+  </div>
+
+  <!-- REPORT SECTION -->
+  <div id="report-section" style="display:none;">
+    <div class="form-card">
+      <h2>📊 ملخص وتقرير الجبب</h2>
+      <div class="rep-filter-grid">
+        <div class="form-group">
+          <label>📅 من تاريخ</label>
+          <input type="date" id="rep-from">
         </div>
-        <div class="wform-group"><label>اللون *</label><div class="color-picker" id="wColorPicker"></div><input type="hidden" id="wf_color"></div>
-        <div class="wform-group"><label>ملاحظة</label><input type="text" id="wf_note" placeholder="اختياري..."></div>
-        <button class="worker-submit-btn" onclick="workerSave()">✅ حفظ الإنتاج</button>
-      </div>
-    </div>
-    <div class="worker-recents-section">
-      <div class="wrs-title">🕐 آخر سجلاتك</div>
-      <div id="workerRecentsList"></div>
-    </div>
-  </div>
-</div>
-
-<div id="screen-adminApp">
-  <div class="admin-topbar">
-    <div class="at-brand">
-      <div class="at-icon">🧵</div>
-      <div><div class="at-title">ورشة الخياطة</div><div class="at-sub" id="adminRoleLabel">لوحة المدير</div></div>
-    </div>
-    <div class="at-actions">
-      <span id="syncBadge" style="font-size:1rem">☁️</span>
-      <button class="topbar-btn" onclick="exportXLSX()">📊</button>
-      <button class="topbar-btn" onclick="adminLogout()">🚪</button>
-    </div>
-  </div>
-  <div class="admin-scroll" id="adminScroll" data-page="records">
-    <div class="apage active" id="apage-records">
-      <div id="adminMiniStats"></div>
-      <div class="filter-scroll" id="adminFilterBar"></div>
-      <div class="sec-header">
-        <div class="sec-title">🪡 سجلات الإنتاج</div>
-        <span class="sec-count" id="adminRecCount">0</span>
-      </div>
-      <div class="cards-list" id="adminCardsList"></div>
-      <div class="empty" id="adminEmptyState" style="display:none"><div class="empty-icon">🧵</div><p>لا توجد سجلات</p></div>
-    </div>
-    <div class="apage" id="apage-summary">
-      <div class="sec-header" style="padding-top:.85rem"><div class="sec-title">📋 ملخص كل موظفة</div></div>
-      <div class="summary-page" id="summaryPage"></div>
-    </div>
-    <div class="apage" id="apage-report"><div class="report-page" id="reportPage"></div></div>
-    <div class="apage" id="apage-settings">
-      <div class="sec-header" style="padding-top:.85rem"><div class="sec-title">⚙️ الإعدادات</div></div>
-      <div class="settings-page" id="settingsPage"></div>
-    </div>
-  </div>
-  <button class="fab" id="afab" onclick="openAddRecord()">+</button>
-  <nav class="bottom-nav">
-    <button class="anav-btn active" id="anav-records" onclick="showAdminPage('records')"><span class="nav-icon">🪡</span>السجلات</button>
-    <button class="anav-btn" id="anav-summary" onclick="showAdminPage('summary')"><span class="nav-icon">📋</span>الملخص</button>
-    <button class="anav-btn" id="anav-report" onclick="showAdminPage('report')"><span class="nav-icon">📅</span>التقرير</button>
-    <button class="anav-btn" id="anav-settings" onclick="showAdminPage('settings')"><span class="nav-icon">⚙️</span>الإعدادات</button>
-  </nav>
-</div>
-
-<div class="overlay" id="recordOverlay" onclick="if(event.target===this)closeSheet('recordOverlay')">
-  <div class="sheet">
-    <div class="sheet-handle"></div>
-    <div class="sheet-title" id="recordSheetTitle">➕ إضافة سجل إنتاج</div>
-    <div class="sheet-body">
-      <div class="form-grid2">
-        <div class="form-group"><label>الموظفة *</label><select id="r_worker"></select></div>
-        <div class="form-group"><label>الموديل *</label><select id="r_model"></select></div>
-      </div>
-      <div class="form-grid2">
-        <div class="form-group"><label>المقاس *</label><select id="r_size"><option>M</option><option>L</option><option selected>XL</option><option>XXL</option><option>3XL</option></select></div>
-        <div class="form-group"><label>التاريخ *</label><input type="date" id="r_date"></div>
-      </div>
-      <div class="form-group">
-        <label>العدد *</label>
-        <div class="qty-control">
-          <button class="qty-btn" onclick="changeQty(-1)">−</button>
-          <div class="qty-val" id="qtyDisplay">1</div>
-          <button class="qty-btn" onclick="changeQty(1)">+</button>
+        <div class="form-group">
+          <label>📅 إلى تاريخ</label>
+          <input type="date" id="rep-to">
         </div>
-        <input type="hidden" id="r_qty" value="1">
+        <div class="form-group">
+          <label>🧵 الخياط</label>
+          <select id="rep-tailor"><option value="">كل الخياطين</option></select>
+        </div>
+        <div class="form-group" style="justify-content:flex-end;padding-top:20px;">
+          <button onclick="resetReport()" class="settings-toggle" style="width:100%;justify-content:center;">↺ إعادة تعيين</button>
+        </div>
       </div>
-      <div class="form-group"><label>اللون *</label><div class="color-picker" id="colorPicker"></div><input type="hidden" id="r_color"></div>
-      <div class="form-group"><label>ملاحظة</label><input type="text" id="r_note" placeholder="اختياري..."></div>
-      <div class="sheet-btns">
-        <button class="sbtn sbtn-ghost" onclick="closeSheet('recordOverlay')">إلغاء</button>
-        <button class="sbtn sbtn-gold" onclick="saveRecord()">💾 حفظ</button>
+      <button class="btn-primary btn-full" onclick="renderReport()">🔍 عرض التقرير</button>
+    </div>
+    <div class="rep-stats-grid" id="rep-stats"></div>
+    <div class="table-card">
+      <div class="table-header-bar"><h2>📐 إجمالي كل موديل</h2></div>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead><tr><th>الموديل</th><th style="text-align:center">📤 صادر</th><th style="text-align:center">📥 وارد</th><th style="text-align:center">⚖️ الفرق</th><th style="text-align:center">نسبة العودة</th></tr></thead>
+          <tbody id="rep-model-body"></tbody>
+          <tfoot id="rep-model-foot"></tfoot>
+        </table>
       </div>
+    </div>
+    <div class="table-card" style="margin-top:14px;">
+      <div class="table-header-bar"><h2>🧵 إجمالي كل خياط</h2></div>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead><tr><th>الخياط</th><th style="text-align:center">📤 صادر</th><th style="text-align:center">📥 وارد</th><th style="text-align:center">⚖️ الفرق</th></tr></thead>
+          <tbody id="rep-tailor-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- BACKUP/SETTINGS SECTION -->
+  <div id="backup-section" style="display:none;">
+
+    <div class="backup-card green">
+      <h2>☁️ حالة التخزين السحابي</h2>
+      <div class="firebase-status local" id="firebase-status-box">
+        <span>🟡</span>
+        <div>
+          <div style="font-weight:800;">وضع محلي (localStorage)</div>
+          <div style="font-size:0.72rem;font-weight:400;margin-top:2px;">أدخل إعدادات Firebase لتفعيل التزامن</div>
+        </div>
+      </div>
+      <p style="font-size:0.78rem;color:#777;margin-bottom:12px;">السجلات محفوظة على الجهاز حالياً. لتزامن البيانات بين الأجهزة:</p>
+      <button class="settings-toggle" style="width:100%;justify-content:center;" onclick="toggleFirebaseSetup()">⚙️ إعداد Firebase (التخزين السحابي)</button>
+      <div id="firebase-setup" style="display:none;margin-top:12px;padding:14px;background:var(--cream);border-radius:10px;border:1px solid rgba(201,168,76,0.25);">
+        <p style="font-size:0.78rem;color:#666;margin-bottom:12px;line-height:1.6;">
+          1. اذهب إلى <strong>console.firebase.google.com</strong><br>
+          2. أنشئ مشروعاً جديداً<br>
+          3. اختر <strong>Realtime Database</strong> → أنشئ قاعدة بيانات<br>
+          4. اذهب إلى <strong>Project Settings</strong> → انسخ الإعدادات هنا
+        </p>
+        <div class="pwd-form">
+          <input type="text" id="fb-apikey" placeholder="apiKey">
+          <input type="text" id="fb-dburl" placeholder="databaseURL (يجب أن يبدأ بـ https://)">
+          <input type="text" id="fb-projectid" placeholder="projectId">
+          <input type="text" id="fb-appid" placeholder="appId">
+          <button class="btn-primary btn-full" onclick="saveFirebaseConfig()">💾 حفظ وتفعيل Firebase</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="backup-card gold">
+      <h2>💾 نسخة احتياطية وتصدير</h2>
+      <div class="backup-btns">
+        <button class="btn-backup export-json" onclick="exportJSON()">
+          <span class="b-icon">📤</span>حفظ نسخة احتياطية
+        </button>
+        <button class="btn-backup import-json" onclick="document.getElementById('hidden-file-input').click()">
+          <span class="b-icon">📥</span>استعادة نسخة
+        </button>
+        <button class="btn-backup export-xl" onclick="exportExcel()">
+          <span class="b-icon">📊</span>تصدير Excel
+        </button>
+        <button class="btn-backup reset-data" onclick="askResetAll()">
+          <span class="b-icon">🗑️</span>مسح الكل
+        </button>
+      </div>
+      <div class="backup-info" id="backup-info">...</div>
+    </div>
+
+    <div class="backup-card gold">
+      <h2>🔑 تغيير كلمة المرور</h2>
+      <div class="pwd-form">
+        <input type="password" id="pwd-old"  placeholder="كلمة المرور الحالية">
+        <input type="password" id="pwd-new1" placeholder="كلمة المرور الجديدة">
+        <input type="password" id="pwd-new2" placeholder="تأكيد كلمة المرور الجديدة">
+        <button class="btn-primary btn-full" onclick="changePwd()">💾 تغيير كلمة المرور</button>
+      </div>
+    </div>
+
+    <!-- PWA Install in settings -->
+    <div class="backup-card green" id="pwa-card" style="display:none;">
+      <h2>📲 تثبيت التطبيق</h2>
+      <p style="font-size:0.8rem;color:#666;margin-bottom:12px;">ثبّت التطبيق على شاشة هاتفك ليعمل مثل تطبيق عادي بدون متصفح</p>
+      <button class="btn-primary btn-full" onclick="installApp()">📲 تثبيت التطبيق الآن</button>
+    </div>
+
+  </div>
+
+</div><!-- /.main -->
+
+<!-- EDIT MODAL -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h2>✏️ تعديل السجل</h2>
+    <input type="hidden" id="edit-id">
+    <div class="form-grid">
+      <div class="form-group"><label>📐 الموديل</label><select id="edit-model"></select></div>
+      <div class="form-group"><label>🧵 الخياط</label><select id="edit-tailor"></select></div>
+      <div class="form-group"><label>🔢 العدد</label><input type="number" id="edit-count" min="1" inputmode="numeric"></div>
+      <div class="form-group"><label>📅 التاريخ</label><input type="date" id="edit-date"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">إلغاء</button>
+      <button class="btn-primary" onclick="saveEdit()">💾 حفظ</button>
     </div>
   </div>
 </div>
 
-<div class="overlay" id="deleteOverlay" onclick="if(event.target===this)closeSheet('deleteOverlay')">
-  <div class="sheet">
-    <div class="sheet-handle"></div>
-    <div class="sheet-title" style="color:var(--rose)">🗑️ تأكيد الحذف</div>
-    <div class="sheet-body">
-      <div class="confirm-icon">⚠️</div>
-      <p class="confirm-msg">هل أنت متأكد من حذف هذا السجل؟<br><strong>لا يمكن التراجع.</strong></p>
-      <div class="sheet-btns">
-        <button class="sbtn sbtn-ghost" onclick="closeSheet('deleteOverlay')">إلغاء</button>
-        <button class="sbtn sbtn-danger" onclick="confirmDelete()">🗑️ حذف</button>
-      </div>
+<!-- CONFIRM MODAL -->
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal" style="text-align:center;">
+    <div class="modal-handle"></div>
+    <button class="modal-close" onclick="closeConfirm()">✕</button>
+    <div style="font-size:2.5rem;margin-bottom:10px;" id="confirm-icon">⚠️</div>
+    <h2 style="justify-content:center;" id="confirm-title">تأكيد الحذف</h2>
+    <p style="color:#666;font-size:0.85rem;margin-top:-8px;" id="confirm-msg">هل أنت متأكد؟</p>
+    <div class="modal-actions" style="justify-content:center;margin-top:14px;">
+      <button class="btn-cancel" onclick="closeConfirm()">إلغاء</button>
+      <button class="btn-primary" id="confirm-action-btn" style="background:linear-gradient(135deg,#c0392b,#e74c3c);">تأكيد</button>
     </div>
   </div>
 </div>
 
+<input type="file" id="hidden-file-input" accept=".json" onchange="importJSON(event)">
 <div class="toast" id="toast"></div>
 
 <script>
-// ══════════════════════════════════════════════════════
-//  ⚙️ الإعدادات — غيّر هنا فقط
-// ══════════════════════════════════════════════════════
-var FIREBASE_CONFIG = {
-  apiKey:            "AIzaSyC_fQFMqg5-ZVL3oSdzDt-DQ_aDdfFmC60",
-  authDomain:        "workshop1-4f14a.firebaseapp.com",
-  projectId:         "workshop1-4f14a",
-  storageBucket:     "workshop1-4f14a.firebasestorage.app",
-  messagingSenderId: "175989367938",
-  appId:             "1:175989367938:web:8afdfbc19c1ac71d55809b"
+// ══════════════ STATE ══════════════
+const DEFAULT_PWD = '1234';
+window._state = {
+  models:  ['كنفة','مربعات','غالون'],
+  tailors: ['شاهيناز','امين','مينا','عم فادي'],
+  records: []
 };
-var ADMIN_PASSWORD = "admin1234";
-var USER_PASSWORD  = "0000";  // كلمة سر المستخدم — يمكن للمدير تغييرها
-// ══════════════════════════════════════════════════════
+window._appReady = false;
+let currentTab = 'out';
+let deleteId = null;
+let confirmCallback = null;
+let deferredInstallPrompt = null;
+let isSyncing = false;
 
-var DEFAULT_WORKERS = ['ناريمان','مينا','شاهيناز','سويكي'];
-var DEFAULT_MODELS  = ['كنفة','معينات','مربعات','غالون','كولفي'];
-var DEFAULT_COLORS  = [
-  {name:'احمر',hex:'#c0392b'},{name:'موف',hex:'#9b59b6'},{name:'ميلكا',hex:'#d7bde2'},
-  {name:'زيتي',hex:'#6b8e23'},{name:'بلونوي',hex:'#5dade2'},{name:'غرونا',hex:'#8e1515'},
-  {name:'بيستاش',hex:'#a8d8a8'},{name:'فيردو',hex:'#27ae60'},{name:'تركواز',hex:'#1abc9c'},
-  {name:'بيج',hex:'#d4b896'},{name:'زهر',hex:'#f1948a'},{name:'ازرق',hex:'#2980b9'}
-];
-var AM=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
-var AD=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
-var MC=['#b8892a','#1a6b5c','#8b2a3a','#1a4a8b','#5a2a8b','#2c7a5c','#7a5c2c','#5c2c7a'];
+// ══════════════ GETTERS ══════════════
+const S = () => window._state;
 
-var workers=[], models=[], colors=[], records=[];
-var isAdmin=false, isUser=false, currentWorker=null;
-var editingId=null, deletingId=null, selColor='', wSelColor='';
-var filtW='',filtM='',filtC='',filtS='',filtDate='';
-var rYear=new Date().getFullYear(), rMonth=new Date().getMonth();
-var curQty=1, wCurQty=1;
-var TODAY = new Date().toISOString().split('T')[0];
-var db = null;
-
-// ── Screens ──────────────────────────────────────────
-function setScreen(name) {
-  ['loading','home','workerApp','adminApp'].forEach(function(s){
-    var el = document.getElementById('screen-'+s);
-    if(el){ el.style.display='none'; el.style.flexDirection=''; }
-  });
-  var t = document.getElementById('screen-'+name);
-  if(t){
-    t.style.display='flex';
-    t.style.flexDirection='column';
-    if(name==='home') t.style.flexDirection='column';
+// ══════════════ LOCAL STORAGE ══════════════
+function loadLocal() {
+  const saved = localStorage.getItem('workshop_data_v2');
+  if (saved) {
+    const d = JSON.parse(saved);
+    S().models  = d.models  || S().models;
+    S().tailors = d.tailors || S().tailors;
+    S().records = d.records || [];
   }
 }
 
-// ── Toast ─────────────────────────────────────────────
-function toast(msg, type) {
-  var t=document.getElementById('toast');
-  t.textContent=msg;
-  t.className='toast '+(type||'info')+' show';
-  setTimeout(function(){t.classList.remove('show');},3000);
+function saveLocal() {
+  localStorage.setItem('workshop_data_v2', JSON.stringify({
+    models: S().models, tailors: S().tailors, records: S().records
+  }));
 }
 
-// ── Sync badge ────────────────────────────────────────
-function syncBadge(state) {
-  var el=document.getElementById('syncBadge');
-  if(!el) return;
-  var map={ok:'☁️',syncing:'⏳',err:'⚠️'};
-  el.textContent = map[state]||'☁️';
-}
-
-// ── INIT ─────────────────────────────────────────────
-function initApp() {
-  workers = DEFAULT_WORKERS.slice();
-  models  = DEFAULT_MODELS.slice();
-  colors  = DEFAULT_COLORS.map(function(c){return {name:c.name,hex:c.hex};});
-
-  setScreen('loading');
-
-  // Timeout fallback — يفتح التطبيق بعد 8 ثوانٍ حتى لو Firebase بطيء
-  var tid = setTimeout(function(){
-    toast('تعذّر الاتصال — وضع محلي مؤقت','error');
-    var savedSession = localStorage.getItem('ws_session');
-    var savedWorker  = localStorage.getItem('ws_worker');
-    if(savedSession === 'admin') {
-      isAdmin=true; isUser=false; setScreen('adminApp');
-      document.getElementById('adminRoleLabel').textContent='لوحة المدير';
-      showAdminPage('records'); refreshAdmin();
-    } else if(savedSession === 'user') {
-      isUser=true; isAdmin=false; setScreen('adminApp');
-      document.getElementById('adminRoleLabel').textContent='عرض المستخدم';
-      showAdminPage('records'); refreshAdmin();
-    } else if(savedSession === 'worker' && savedWorker) {
-      enterWorker(savedWorker);
-    } else {
-      setScreen('home');
-    }
-  }, 8000);
-
+// ══════════════ FIREBASE SAVE ══════════════
+async function saveToFirebase() {
+  if (!window._firebase?.configured) { saveLocal(); return; }
+  isSyncing = true;
+  updateCloudBar('syncing');
   try {
-    firebase.initializeApp(FIREBASE_CONFIG);
-    db = firebase.firestore();
-
-    // Test connection
-    db.collection('settings').doc('workshop_config').get()
-      .then(function(snap){
-        clearTimeout(tid);
-        if(!snap.exists){
-          return db.collection('settings').doc('workshop_config').set({
-            workers: DEFAULT_WORKERS, models: DEFAULT_MODELS, colors: DEFAULT_COLORS
-          });
-        } else {
-          var d = snap.data();
-          workers = d.workers || DEFAULT_WORKERS.slice();
-          models  = d.models  || DEFAULT_MODELS.slice();
-          colors  = d.colors  || DEFAULT_COLORS.map(function(c){return {name:c.name,hex:c.hex};});
-        }
-      })
-      .then(function(){
-        // Live listeners
-        db.collection('settings').doc('workshop_config').onSnapshot(function(snap){
-          if(!snap.exists) return;
-          var d=snap.data();
-          workers=d.workers||[]; models=d.models||[]; colors=d.colors||[];
-          if(isAdmin) refreshAdmin(); else renderHome();
-        });
-        db.collection('records').onSnapshot(function(snap){
-          records = snap.docs.map(function(d){ return Object.assign({id:d.id},d.data()); });
-          records.sort(function(a,b){ return b.date.localeCompare(a.date); });
-          syncBadge('ok');
-          if(isAdmin) refreshAdmin();
-          else if(currentWorker) renderWorkerRecents();
-        });
-        // ── استعادة الجلسة المحفوظة ──
-        var savedSession = localStorage.getItem('ws_session');
-        var savedWorker  = localStorage.getItem('ws_worker');
-        if(savedSession === 'admin') {
-          isAdmin=true; isUser=false; currentWorker=null;
-          setScreen('adminApp');
-          document.getElementById('adminRoleLabel').textContent='لوحة المدير';
-          showAdminPage('records');
-          refreshAdmin();
-          syncBadge('ok');
-        } else if(savedSession === 'user') {
-          isUser=true; isAdmin=false; currentWorker=null;
-          setScreen('adminApp');
-          document.getElementById('adminRoleLabel').textContent='عرض المستخدم';
-          showAdminPage('records');
-          refreshAdmin();
-          syncBadge('ok');
-        } else if(savedSession === 'worker' && savedWorker) {
-          enterWorker(savedWorker);
-        } else {
-          setScreen('home');
-        }
-      })
-      .catch(function(e){
-        clearTimeout(tid);
-        console.error('Firestore error:',e);
-        toast('خطأ Firebase: '+e.code,'error');
-        setScreen('home');
-        renderHome();
-      });
+    const { db, ref, set } = window._firebase;
+    const recordsObj = {};
+    S().records.forEach(r => { recordsObj[r.id] = r; });
+    await set(window._firebase.dbRef, {
+      models: S().models,
+      tailors: S().tailors,
+      records: recordsObj
+    });
+    saveLocal(); // keep local backup
+    updateCloudBar('connected');
   } catch(e) {
-    clearTimeout(tid);
-    console.error('Init error:',e);
-    toast('خطأ في التهيئة','error');
-    setScreen('home');
-    renderHome();
+    saveLocal();
+    updateCloudBar('offline');
   }
+  isSyncing = false;
 }
 
-// ── Home ─────────────────────────────────────────────
-function renderHome() {
-  var g = document.getElementById('homeWorkerGrid');
-  if(!g) return;
-  g.innerHTML = workers.map(function(w){
-    return '<button class="worker-pick-btn" onclick="enterWorker(\''+w+'\')">'+
-      '<div class="wpb-avatar">'+w.charAt(0)+'</div>'+
-      '<div class="wpb-name">'+w+'</div></button>';
-  }).join('');
+function save() {
+  if (window._firebase?.configured) saveToFirebase();
+  else saveLocal();
+  updateBackupInfo();
 }
 
-function openAdminLogin() {
-  document.getElementById('adminLoginSheet').classList.add('show');
-  setTimeout(function(){document.getElementById('adminPw').focus();},200);
-}
-function closeAdminLogin() {
-  document.getElementById('adminLoginSheet').classList.remove('show');
-  document.getElementById('adminPw').value='';
-}
-function tryAdminLogin() {
-  var pw = document.getElementById('adminPw').value;
-  if(pw === ADMIN_PASSWORD) {
-    isAdmin=true; isUser=false; currentWorker=null;
-    localStorage.setItem('ws_session','admin');
-    closeAdminLogin();
-    setScreen('adminApp');
-    document.getElementById('adminRoleLabel').textContent='لوحة المدير';
-    showAdminPage('records');
-    refreshAdmin();
-    syncBadge('ok');
-  } else {
-    var err = document.getElementById('adminPwErr');
-    err.style.display='block';
-    document.getElementById('adminPw').value='';
-    setTimeout(function(){err.style.display='none';},2500);
-  }
+// ══════════════ FIREBASE CONFIG STORAGE ══════════════
+function loadFirebaseConfig() {
+  return JSON.parse(localStorage.getItem('fb_config') || 'null');
 }
 
-function openUserLogin() {
-  document.getElementById('userLoginSheet').classList.add('show');
-  setTimeout(function(){document.getElementById('userPw').focus();},200);
-}
-function closeUserLogin() {
-  document.getElementById('userLoginSheet').classList.remove('show');
-  document.getElementById('userPw').value='';
-}
-function tryUserLogin() {
-  var pw = document.getElementById('userPw').value;
-  if(pw === USER_PASSWORD) {
-    isUser=true; isAdmin=false; currentWorker=null;
-    localStorage.setItem('ws_session','user');
-    closeUserLogin();
-    setScreen('adminApp');
-    document.getElementById('adminRoleLabel').textContent='عرض المستخدم';
-    showAdminPage('records');
-    refreshAdmin();
-    syncBadge('ok');
-  } else {
-    var err = document.getElementById('userPwErr');
-    err.style.display='block';
-    document.getElementById('userPw').value='';
-    setTimeout(function(){err.style.display='none';},2500);
-  }
-}
-function adminLogout() {
-  isAdmin=false; isUser=false;
-  localStorage.removeItem('ws_session');
-  localStorage.removeItem('ws_worker');
-  setScreen('home');
-}
-function goHome() {
-  currentWorker=null; isAdmin=false; isUser=false;
-  localStorage.removeItem('ws_session');
-  localStorage.removeItem('ws_worker');
-  setScreen('home');
-}
-
-// ── Worker App ───────────────────────────────────────
-function enterWorker(name) {
-  currentWorker=name;
-  isAdmin=false;
-  localStorage.setItem('ws_session','worker');
-  localStorage.setItem('ws_worker', name);
-  document.getElementById('workerAvatar').textContent=name.charAt(0);
-  document.getElementById('workerName').textContent=name;
-  setScreen('workerApp');
-  renderWorkerHeader();
-  renderWorkerForm();
-  renderWorkerRecents();
-}
-
-function renderWorkerHeader() {
-  var tr=records.filter(function(r){return r.worker===currentWorker&&r.date===TODAY;});
-  var todayQ=tr.reduce(function(s,r){return s+r.qty;},0);
-  var totalQ=records.filter(function(r){return r.worker===currentWorker;}).reduce(function(s,r){return s+r.qty;},0);
-  document.getElementById('workerTodayQty').textContent=todayQ;
-  document.getElementById('workerTotalQty').textContent=totalQ;
-}
-
-function renderWorkerForm() {
-  var wm=document.getElementById('wf_model');
-  if(wm) wm.innerHTML=models.map(function(m){return '<option>'+m+'</option>';}).join('');
-  var wd=document.getElementById('wf_date');
-  if(wd) wd.value=TODAY;
-  wCurQty=1;
-  document.getElementById('wQtyDisplay').textContent='1';
-  document.getElementById('wf_qty').value='1';
-  document.getElementById('wf_note').value='';
-  buildWColorPicker();
-}
-
-function buildWColorPicker() {
-  wSelColor='';
-  document.getElementById('wColorPicker').innerHTML=colors.map(function(c){
-    return '<div class="cpick" onclick="wPickColor(\''+c.name+'\')" id="wcp_'+c.name+'">'+
-      '<div class="cdot" style="background:'+c.hex+'"></div><span>'+c.name+'</span></div>';
-  }).join('');
-  document.getElementById('wf_color').value='';
-}
-
-function wPickColor(n) {
-  wSelColor=n;
-  document.getElementById('wf_color').value=n;
-  document.querySelectorAll('#wColorPicker .cpick').forEach(function(el){el.classList.remove('active');});
-  var el=document.getElementById('wcp_'+n);
-  if(el) el.classList.add('active');
-}
-
-function changeWQty(d) {
-  wCurQty=Math.max(1,wCurQty+d);
-  document.getElementById('wQtyDisplay').textContent=wCurQty;
-  document.getElementById('wf_qty').value=wCurQty;
-}
-
-function workerSave() {
-  var m=document.getElementById('wf_model').value;
-  var s=document.getElementById('wf_size').value;
-  var q=parseInt(document.getElementById('wf_qty').value)||0;
-  var d=document.getElementById('wf_date').value;
-  var n=document.getElementById('wf_note').value.trim();
-  var c=document.getElementById('wf_color').value||wSelColor;
-  if(!m||!s||q<1||!d||!c){toast('يرجى تعبئة جميع الحقول واختيار لون','error');return;}
-
-  if(!db) {
-    records.unshift({id:'L'+Date.now(),worker:currentWorker,model:m,size:s,color:c,qty:q,date:d,note:n});
-    toast('تم تسجيل '+q+' جبة ✓ (محلي)','success');
-    renderWorkerForm(); renderWorkerHeader(); renderWorkerRecents();
-    return;
-  }
-  syncBadge('syncing');
-  db.collection('records').add({worker:currentWorker,model:m,size:s,color:c,qty:q,date:d,note:n,createdAt:Date.now()})
-    .then(function(){
-      toast('تم تسجيل '+q+' جبة ✓','success');
-      renderWorkerForm(); renderWorkerHeader(); renderWorkerRecents();
-      syncBadge('ok');
-    }).catch(function(e){
-      toast('خطأ في الحفظ — تحقق من الإنترنت','error');
-      syncBadge('err');
-    });
-}
-
-function renderWorkerRecents() {
-  var el=document.getElementById('workerRecentsList');
-  if(!el||!currentWorker) return;
-  var myR=records.filter(function(r){return r.worker===currentWorker;}).slice(0,10);
-  if(!myR.length){el.innerHTML='<div style="text-align:center;padding:1.5rem;color:var(--ink3)">لا توجد سجلات بعد</div>';return;}
-  el.innerHTML=myR.map(function(r){
-    var hex=gch(r.color);
-    return '<div class="wrec-card">'+
-      '<div style="display:flex;justify-content:space-between;align-items:center">'+
-      '<div><div class="wrec-date">'+r.date+'</div>'+
-      '<div class="wrec-tags">'+
-      '<span class="tag tag-model">👗 '+r.model+'</span>'+
-      '<span class="tag tag-size">📐 '+r.size+'</span>'+
-      '<span class="tag tag-color" style="background:'+hex+'22;color:'+hex+';border:1px solid '+hex+'44">'+
-      '<span class="cdot-sm" style="background:'+hex+'"></span>'+r.color+'</span></div>'+
-      (r.note?'<div style="font-size:.7rem;color:var(--ink3);margin-top:.25rem">📝 '+r.note+'</div>':'')+'</div>'+
-      '<div style="text-align:center;min-width:44px"><div style="font-size:1.5rem;font-weight:900;color:var(--teal)">'+r.qty+'</div><div style="font-size:.6rem;color:var(--ink3)">جبة</div></div>'+
-      '</div></div>';
-  }).join('');
-  renderWorkerHeader();
-}
-
-// ── Admin App ─────────────────────────────────────────
-function showAdminPage(n) {
-  document.querySelectorAll('.apage').forEach(function(p){p.classList.remove('active');});
-  document.querySelectorAll('.anav-btn').forEach(function(b){b.classList.remove('active');});
-  document.getElementById('apage-'+n).classList.add('active');
-  document.getElementById('anav-'+n).classList.add('active');
-  document.getElementById('afab').style.display=(n==='records'&&isAdmin)?'flex':'none';
-  document.getElementById('adminScroll').dataset.page=n;
-  document.getElementById('adminScroll').scrollTop=0;
-  if(n==='summary') renderSummary();
-  if(n==='report')  renderReport();
-  if(n==='settings') renderSettings();
-}
-
-function refreshAdmin() {
-  var cur=document.getElementById('adminScroll').dataset.page||'records';
-  renderAdminFilterBar();
-  applyFilters();
-  if(cur==='summary') renderSummary();
-  if(cur==='report')  renderReport();
-  if(cur==='settings') renderSettings();
-}
-
-function applyFilters() {
-  var fr=records.filter(function(r){
-    return (!filtW||r.worker===filtW)&&(!filtM||r.model===filtM)&&(!filtC||r.color===filtC)&&(!filtS||r.size===filtS)&&(!filtDate||r.date===filtDate);
-  });
-  renderAdminCards(fr);
-  renderMiniStats(fr);
-}
-
-function renderMiniStats(fr) {
-  var total=fr.reduce(function(s,r){return s+r.qty;},0);
-  var wm={};fr.forEach(function(r){wm[r.worker]=(wm[r.worker]||0)+r.qty;});
-  var best=Object.entries(wm).sort(function(a,b){return b[1]-a[1];})[0];
-  document.getElementById('adminMiniStats').innerHTML='<div class="mini-stats">'+
-    '<div class="mini-stat"><div class="mini-stat-icon">🧵</div><div><div class="mini-stat-val">'+total+'</div><div class="mini-stat-lbl">إجمالي الجبب</div></div></div>'+
-    '<div class="mini-stat"><div class="mini-stat-icon">📋</div><div><div class="mini-stat-val">'+fr.length+'</div><div class="mini-stat-lbl">السجلات</div></div></div>'+
-    '<div class="mini-stat"><div class="mini-stat-icon">👩</div><div><div class="mini-stat-val">'+new Set(fr.map(function(r){return r.worker;})).size+'</div><div class="mini-stat-lbl">موظفات</div></div></div>'+
-    (best?'<div class="mini-stat" style="border-color:var(--gold2)"><div class="mini-stat-icon">🏆</div><div><div class="mini-stat-val" style="color:var(--gold);font-size:.85rem">'+best[0]+'</div><div class="mini-stat-lbl">'+best[1]+' جبة</div></div></div>':'')+'</div>';
-}
-
-function renderAdminFilterBar() {
-  document.getElementById('adminFilterBar').innerHTML=
-    '<div class="filter-chip'+(filtW?' active-filter':'')+'">👩 <select onchange="filtW=this.value;applyFilters()" style="max-width:70px"><option value="">الكل</option>'+workers.map(function(w){return '<option'+(w===filtW?' selected':'')+'>'+w+'</option>';}).join('')+'</select></div>'+
-    '<div class="filter-chip'+(filtM?' active-filter':'')+'">👗 <select onchange="filtM=this.value;applyFilters()" style="max-width:65px"><option value="">الكل</option>'+models.map(function(m){return '<option'+(m===filtM?' selected':'')+'>'+m+'</option>';}).join('')+'</select></div>'+
-    '<div class="filter-chip'+(filtS?' active-filter':'')+'">📐 <select onchange="filtS=this.value;applyFilters()" style="max-width:55px"><option value="">الكل</option>'+['M','L','XL','XXL','3XL'].map(function(s){return '<option'+(s===filtS?' selected':'')+'>'+s+'</option>';}).join('')+'</select></div>'+
-    '<div class="filter-chip'+(filtC?' active-filter':'')+'">🎨 <select onchange="filtC=this.value;applyFilters()" style="max-width:65px"><option value="">الكل</option>'+colors.map(function(c){return '<option value="'+c.name+'"'+(c.name===filtC?' selected':'')+'>'+c.name+'</option>';}).join('')+'</select></div>'+
-    '<div class="filter-chip'+(filtDate?' active-filter':'')+'">📅 <input type="date" value="'+filtDate+'" onchange="filtDate=this.value;applyFilters();renderAdminFilterBar()" style="border:none;background:transparent;font-family:Cairo,sans-serif;font-size:.72rem;color:inherit;outline:none;cursor:pointer;width:110px"></div>'+
-    '<div class="filter-chip" onclick="filtW=\'\';filtM=\'\';filtS=\'\';filtC=\'\';filtDate=\'\';applyFilters();renderAdminFilterBar()">✕ مسح</div>';
-}
-
-function renderAdminCards(fr) {
-  var el=document.getElementById('adminCardsList'),em=document.getElementById('adminEmptyState');
-  document.getElementById('adminRecCount').textContent=fr.length;
-  if(!fr.length){el.innerHTML='';em.style.display='block';return;}
-  em.style.display='none';
-  el.innerHTML=fr.map(function(r){
-    var hex=gch(r.color);
-    return '<div class="rec-card">'+
-      '<div class="rec-card-top"><div class="rec-worker">'+
-      '<div class="worker-avatar">'+(r.worker||'؟').charAt(0)+'</div>'+
-      '<div><div class="worker-name">'+(r.worker||'—')+'</div><div class="worker-date">'+(r.date||'')+'</div></div></div>'+
-      '<div style="text-align:center"><div class="rec-qty">'+r.qty+'</div><div class="rec-qty-lbl">جبة</div></div></div>'+
-      '<div class="rec-card-tags">'+
-      '<span class="tag tag-model">👗 '+r.model+'</span>'+
-      '<span class="tag tag-size">📐 '+r.size+'</span>'+
-      '<span class="tag tag-color" style="background:'+hex+'22;color:'+hex+';border:1px solid '+hex+'44">'+
-      '<span class="cdot-sm" style="background:'+hex+'"></span>'+r.color+'</span></div>'+
-      (r.note?'<div class="rec-note">📝 '+r.note+'</div>':'')+
-      (isAdmin ?
-        '<div class="rec-actions">'+
-        '<button class="act-btn act-edit" onclick="openEdit(\''+r.id+'\')">✏️ تعديل</button>'+
-        '<button class="act-btn act-del" onclick="openDel(\''+r.id+'\')">🗑️ حذف</button>'+
-        '</div>'
-      : '')+
-      '</div>';
-  }).join('');
-}
-
-// Admin record form
-function buildColorPicker(){
-  document.getElementById('colorPicker').innerHTML=colors.map(function(c){
-    return '<div class="cpick'+(selColor===c.name?' active':'')+'" onclick="pickColor(\''+c.name+'\')" id="cp_'+c.name+'">'+
-      '<div class="cdot" style="background:'+c.hex+'"></div><span>'+c.name+'</span></div>';
-  }).join('');
-}
-function pickColor(n){
-  selColor=n; document.getElementById('r_color').value=n;
-  document.querySelectorAll('#colorPicker .cpick').forEach(function(el){el.classList.remove('active');});
-  var el=document.getElementById('cp_'+n); if(el) el.classList.add('active');
-}
-function changeQty(d){curQty=Math.max(1,curQty+d);document.getElementById('qtyDisplay').textContent=curQty;document.getElementById('r_qty').value=curQty;}
-
-function openAddRecord(){
-  editingId=null; selColor=''; curQty=1;
-  document.getElementById('recordSheetTitle').textContent='➕ إضافة سجل إنتاج';
-  document.getElementById('r_date').value=TODAY;
-  document.getElementById('qtyDisplay').textContent='1';
-  document.getElementById('r_qty').value='1';
-  document.getElementById('r_note').value='';
-  document.getElementById('r_worker').innerHTML=workers.map(function(w){return '<option>'+w+'</option>';}).join('');
-  document.getElementById('r_model').innerHTML=models.map(function(m){return '<option>'+m+'</option>';}).join('');
-  buildColorPicker();
-  document.getElementById('recordOverlay').classList.add('show');
-}
-function openEdit(id){
-  var rec=records.find(function(r){return r.id===id;}); if(!rec) return;
-  editingId=id; selColor=rec.color; curQty=rec.qty;
-  document.getElementById('recordSheetTitle').textContent='✏️ تعديل السجل';
-  document.getElementById('r_worker').innerHTML=workers.map(function(w){return '<option>'+w+'</option>';}).join('');
-  document.getElementById('r_model').innerHTML=models.map(function(m){return '<option>'+m+'</option>';}).join('');
-  document.getElementById('r_worker').value=rec.worker;
-  document.getElementById('r_model').value=rec.model;
-  document.getElementById('r_size').value=rec.size;
-  document.getElementById('r_date').value=rec.date;
-  document.getElementById('qtyDisplay').textContent=rec.qty;
-  document.getElementById('r_qty').value=rec.qty;
-  document.getElementById('r_note').value=rec.note||'';
-  buildColorPicker();
-  document.getElementById('recordOverlay').classList.add('show');
-}
-function openDel(id){ deletingId=id; document.getElementById('deleteOverlay').classList.add('show'); }
-function closeSheet(id){ document.getElementById(id).classList.remove('show'); }
-
-function saveRecord(){
-  var w=document.getElementById('r_worker').value,m=document.getElementById('r_model').value,
-    s=document.getElementById('r_size').value,q=parseInt(document.getElementById('r_qty').value)||0,
-    d=document.getElementById('r_date').value,n=document.getElementById('r_note').value.trim(),
-    c=document.getElementById('r_color').value||selColor;
-  if(!w||!m||!s||q<1||!d||!c){toast('يرجى تعبئة جميع الحقول واختيار لون','error');return;}
-  if(!db){
-    if(editingId){var i=records.findIndex(function(r){return r.id===editingId;});if(i>-1)records[i]={id:editingId,worker:w,model:m,size:s,color:c,qty:q,date:d,note:n};}
-    else records.unshift({id:'L'+Date.now(),worker:w,model:m,size:s,color:c,qty:q,date:d,note:n});
-    closeSheet('recordOverlay'); refreshAdmin(); toast('تم الحفظ (محلي)','success'); return;
-  }
-  syncBadge('syncing');
-  var p = editingId ?
-    db.collection('records').doc(editingId).update({worker:w,model:m,size:s,color:c,qty:q,date:d,note:n}) :
-    db.collection('records').add({worker:w,model:m,size:s,color:c,qty:q,date:d,note:n,createdAt:Date.now()});
-  p.then(function(){closeSheet('recordOverlay');toast(editingId?'تم التعديل ✓':'تم الإضافة ✓','success');syncBadge('ok');})
-   .catch(function(){toast('خطأ في الحفظ','error');syncBadge('err');});
-}
-
-function confirmDelete(){
-  if(!deletingId) return;
-  if(!db){records=records.filter(function(r){return r.id!==deletingId;});closeSheet('deleteOverlay');refreshAdmin();toast('تم الحذف','info');return;}
-  syncBadge('syncing');
-  db.collection('records').doc(deletingId).delete()
-    .then(function(){closeSheet('deleteOverlay');toast('تم الحذف','info');syncBadge('ok');})
-    .catch(function(){toast('خطأ في الحذف','error');syncBadge('err');});
-}
-
-// Settings CRUD
-function saveSettings(){
-  if(!db) return;
-  db.collection('settings').doc('workshop_config').set({workers:workers,models:models,colors:colors})
-    .catch(function(){toast('خطأ في حفظ الإعدادات','error');});
-}
-function addWorker(){
-  var n=document.getElementById('new_worker').value.trim();
-  if(!n){toast('أدخلي الاسم','error');return;}
-  if(workers.indexOf(n)>-1){toast('موجودة مسبقاً','error');return;}
-  workers.push(n); saveSettings(); document.getElementById('new_worker').value=''; renderSettings(); toast('تمت الإضافة ✓','success');
-}
-function removeWorker(n){workers=workers.filter(function(w){return w!==n;});saveSettings();renderSettings();toast('تم الحذف','info');}
-function addModel(){
-  var n=document.getElementById('new_model').value.trim();
-  if(!n){toast('أدخل الموديل','error');return;}
-  if(models.indexOf(n)>-1){toast('موجود مسبقاً','error');return;}
-  models.push(n); saveSettings(); document.getElementById('new_model').value=''; renderSettings(); toast('تمت الإضافة ✓','success');
-}
-function removeModel(n){models=models.filter(function(m){return m!==n;});saveSettings();renderSettings();toast('تم الحذف','info');}
-function addColor(){
-  var n=document.getElementById('new_color_name').value.trim(),h=document.getElementById('new_color_hex').value;
-  if(!n){toast('أدخل اسم اللون','error');return;}
-  if(colors.find(function(c){return c.name===n;})){toast('موجود مسبقاً','error');return;}
-  colors.push({name:n,hex:h}); saveSettings(); document.getElementById('new_color_name').value=''; renderSettings(); toast('تمت الإضافة ✓','success');
-}
-function removeColor(n){colors=colors.filter(function(c){return c.name!==n;});saveSettings();renderSettings();toast('تم الحذف','info');}
-
-// ── Summary ───────────────────────────────────────────
-function renderSummary(){
-  var am=Array.from(new Set(models.concat(records.map(function(r){return r.model;}))));
-  var wt={};
-  workers.forEach(function(w){wt[w]={total:0};am.forEach(function(m){wt[w][m]=0;});});
-  records.forEach(function(r){
-    if(!wt[r.worker])wt[r.worker]={total:0};
-    if(wt[r.worker][r.model]===undefined)wt[r.worker][r.model]=0;
-    wt[r.worker][r.model]+=r.qty;wt[r.worker].total+=r.qty;
-  });
-  var maxT=Math.max.apply(null,workers.map(function(w){return wt[w]?wt[w].total||0:0;}).concat([1]));
-  document.getElementById('summaryPage').innerHTML=workers.map(function(w){
-    var d=wt[w]||{},pct=Math.round((d.total||0)/maxT*100);
-    return '<div class="worker-summary-card">'+
-      '<div class="ws-header"><div class="ws-worker">'+
-      '<div class="worker-avatar" style="width:38px;height:38px">'+w.charAt(0)+'</div>'+
-      '<div><div style="font-weight:700;font-size:.95rem">'+w+'</div>'+
-      '<div style="font-size:.68rem;color:var(--ink3)">'+records.filter(function(r){return r.worker===w;}).length+' سجل</div></div></div>'+
-      '<div style="text-align:center"><div class="ws-total">'+(d.total||0)+'</div><div class="ws-total-lbl">جبة</div></div></div>'+
-      '<div class="ws-bar"><div class="ws-bar-fill" style="width:'+pct+'%"></div></div>'+
-      '<div class="ws-models" style="margin-top:.7rem">'+
-      am.filter(function(m){return d[m]>0;}).map(function(m){
-        return '<div class="ws-model-item"><div class="ws-model-name">'+m+'</div><div class="ws-model-val">'+d[m]+'</div></div>';
-      }).join('')+'</div></div>';
-  }).join('');
-}
-
-// ── Report ────────────────────────────────────────────
-function renderReport(){
-  var mr=records.filter(function(r){return r.date&&r.date.startsWith(rYear+'-'+String(rMonth+1).padStart(2,'0'));});
-  var mn=AM[rMonth]+' '+rYear;
-  var totalQ=mr.reduce(function(s,r){return s+r.qty;},0);
-  var days=new Set(mr.map(function(r){return r.date;}));
-  var avg=days.size?(totalQ/days.size).toFixed(1):0;
-  var wm={};mr.forEach(function(r){wm[r.worker]=(wm[r.worker]||0)+r.qty;});
-  var best=Object.entries(wm).sort(function(a,b){return b[1]-a[1];})[0];
-  var html='<div class="report-month-nav">'+
-    '<button class="nav-arrow" onclick="rMonth--;if(rMonth<0){rMonth=11;rYear--;}renderReport()">◀</button>'+
-    '<div class="month-disp">'+mn+'</div>'+
-    '<button class="nav-arrow" onclick="rMonth++;if(rMonth>11){rMonth=0;rYear++;}renderReport()">▶</button></div>'+
-    '<div class="kpi-row">'+
-    '<div class="kpi-card gold"><div class="kpi-icon2">🧵</div><div class="kpi-num">'+totalQ+'</div><div class="kpi-lbl">إجمالي الجبب</div></div>'+
-    '<div class="kpi-card teal"><div class="kpi-icon2">📋</div><div class="kpi-num">'+mr.length+'</div><div class="kpi-lbl">السجلات</div></div>'+
-    '<div class="kpi-card blue"><div class="kpi-icon2">👩</div><div class="kpi-num">'+new Set(mr.map(function(r){return r.worker;})).size+'</div><div class="kpi-lbl">موظفات نشطات</div></div>'+
-    '<div class="kpi-card rose"><div class="kpi-icon2">📈</div><div class="kpi-num">'+avg+'</div><div class="kpi-lbl">متوسط يومي</div></div>'+
-    '<div class="kpi-card purple"><div class="kpi-icon2">👗</div><div class="kpi-num">'+new Set(mr.map(function(r){return r.model;})).size+'</div><div class="kpi-lbl">موديلات</div></div>'+
-    '<div class="kpi-card gold"><div class="kpi-icon2">📅</div><div class="kpi-num">'+days.size+'</div><div class="kpi-lbl">أيام الإنتاج</div></div>'+
-    (best?'<div class="kpi-card champion"><div class="kpi-icon2">🏆</div><div class="kpi-num">'+best[0]+' — '+best[1]+' جبة</div><div class="kpi-lbl">الموظفة الأعلى إنتاجاً</div></div>':'')+
-    '</div>';
-  var sorted=Object.entries(wm).sort(function(a,b){return b[1]-a[1];});
-  var maxW=sorted[0]?sorted[0][1]:1;
-  if(sorted.length){
-    html+='<div class="report-section"><div class="rs-header"><span class="rs-title">🏆 ترتيب الموظفات</span></div><div class="rs-body"><div class="rank-list">';
-    sorted.forEach(function(entry,i){
-      var w=entry[0],q=entry[1];
-      var rc=i===0?'r1':i===1?'r2':i===2?'r3':'rn';
-      var wr=mr.filter(function(r){return r.worker===w;});
-      html+='<div class="rank-item"><div class="rank-num '+rc+'">'+(i+1)+'</div>'+
-        '<div class="rank-av">'+w.charAt(0)+'</div>'+
-        '<div class="rank-info"><div class="rank-name">'+w+'</div><div class="rank-sub">'+new Set(wr.map(function(r){return r.date;})).size+' يوم • '+wr.length+' سجل</div></div>'+
-        '<div class="rank-total">'+q+'</div></div>';
-    });
-    html+='</div></div></div>';
-    html+='<div class="report-section"><div class="rs-header"><span class="rs-title">📊 مقارنة الإنتاج</span></div><div class="rs-body"><div class="bar-chart">';
-    sorted.forEach(function(entry,i){
-      var w=entry[0],q=entry[1],pct=Math.round(q/maxW*100);
-      html+='<div class="bar-row"><div class="bar-lbl">'+w+'</div><div class="bar-track"><div class="bar-fill" style="width:'+pct+'%;background:'+MC[i%MC.length]+'"><span class="bar-val">'+q+'</span></div></div></div>';
-    });
-    html+='</div></div></div>';
-  }
-  var mm={};mr.forEach(function(r){mm[r.model]=(mm[r.model]||0)+r.qty;});
-  var sM=Object.entries(mm).sort(function(a,b){return b[1]-a[1];});
-  if(sM.length){
-    var maxMM=sM[0][1];
-    html+='<div class="report-section"><div class="rs-header"><span class="rs-title">👗 إنتاج حسب الموديل</span></div><div class="rs-body"><div class="bar-chart">';
-    sM.forEach(function(entry,i){var m=entry[0],q=entry[1],pct=Math.round(q/maxMM*100);html+='<div class="bar-row"><div class="bar-lbl">'+m+'</div><div class="bar-track"><div class="bar-fill" style="width:'+pct+'%;background:'+MC[(i+2)%MC.length]+'"><span class="bar-val">'+q+'</span></div></div></div>';});
-    html+='</div></div></div>';
-  }
-  if(!mr.length) html+='<div class="empty"><div class="empty-icon">📅</div><p>لا توجد بيانات لهذا الشهر</p></div>';
-  html+='<button class="export-btn-full" onclick="exportMonthly()">📊 تصدير تقرير '+mn+'</button>';
-  document.getElementById('reportPage').innerHTML=html;
-}
-
-// ── Settings render ───────────────────────────────────
-function renderSettings(){
-  // ── قسم الموظفات ──
-  var workersSection =
-    '<div class="settings-section"><div class="settings-section-title">👩 الموظفات</div>'+
-    workers.map(function(w,i){
-      return '<div class="settings-item"><div><div class="si-name">'+w+'</div><div class="si-sub">موظفة #'+(i+1)+'</div></div>'+
-        (isAdmin?'<div><button class="si-del" onclick="removeWorker(\''+w+'\')">🗑️</button></div>':'')+
-        '</div>';
-    }).join('')+
-    (isAdmin?'<div class="add-item-row"><input type="text" id="new_worker" placeholder="اسم موظفة جديدة..."><button class="add-item-btn" onclick="addWorker()">+ إضافة موظفة</button></div>':
-             '<div class="add-item-row"><input type="text" id="new_worker" placeholder="اسم موظفة جديدة..."><button class="add-item-btn" onclick="addWorker()">+ إضافة موظفة</button></div>')+
-    '</div>';
-
-  // ── قسم الموديلات ──
-  var modelsSection =
-    '<div class="settings-section"><div class="settings-section-title">👗 الموديلات</div>'+
-    models.map(function(m,i){
-      return '<div class="settings-item"><div><div class="si-name">'+m+'</div><div class="si-sub">موديل #'+(i+1)+'</div></div>'+
-        (isAdmin?'<div><button class="si-del" onclick="removeModel(\''+m+'\')">🗑️</button></div>':'')+
-        '</div>';
-    }).join('')+
-    (isAdmin?'<div class="add-item-row"><input type="text" id="new_model" placeholder="اسم موديل جديد..."><button class="add-item-btn" onclick="addModel()">+ إضافة موديل</button></div>':
-             '<div class="add-item-row"><input type="text" id="new_model" placeholder="اسم موديل جديد..."><button class="add-item-btn" onclick="addModel()">+ إضافة موديل</button></div>')+
-    '</div>';
-
-  // ── قسم الألوان ──
-  var colorsSection =
-    '<div class="settings-section"><div class="settings-section-title">🎨 الألوان</div>'+
-    colors.map(function(col){
-      return '<div class="settings-item"><div style="display:flex;align-items:center;gap:.6rem"><div style="width:20px;height:20px;border-radius:5px;background:'+col.hex+'"></div><div class="si-name">'+col.name+'</div></div>'+
-        (isAdmin?'<div><button class="si-del" onclick="removeColor(\''+col.name+'\')">🗑️</button></div>':'')+
-        '</div>';
-    }).join('')+
-    '<div class="add-item-row"><input type="text" id="new_color_name" placeholder="اسم اللون..."><div style="display:flex;gap:.5rem;margin-top:.4rem"><input type="color" id="new_color_hex" value="#6699cc" style="width:48px;height:40px;border-radius:9px;border:1px solid var(--border2);padding:2px;cursor:pointer;"><button class="add-item-btn" style="flex:1;margin:0" onclick="addColor()">+ إضافة لون</button></div></div>'+
-    '</div>';
-
-  // ── قسم التصدير ──
-  var exportSection =
-    '<div class="settings-section"><div class="settings-section-title">📊 التصدير والنسخ الاحتياطي</div><div style="padding:.85rem 1rem;display:flex;flex-direction:column;gap:.6rem">'+
-    '<button class="export-btn-full" style="margin:0" onclick="exportXLSX()">📊 تصدير كل السجلات (Excel)</button>'+
-    (isAdmin ?
-      '<button class="export-btn-full" style="margin:0;background:linear-gradient(135deg,var(--teal),var(--teal2))" onclick="backupJSON()">💾 نسخة احتياطية كاملة (JSON)</button>'+
-      '<button class="export-btn-full" style="margin:0;background:linear-gradient(135deg,#555,#333)" onclick="triggerRestore()">📂 استعادة من نسخة احتياطية</button>'+
-      '<input type="file" id="restoreInput" accept=".json" style="display:none" onchange="restoreJSON(this)">'+
-      '<div style="font-size:.7rem;color:var(--ink3);text-align:center;padding-top:.2rem">⚠️ الاستعادة ستستبدل جميع البيانات الحالية</div>'
-    : '') +
-    '</div></div>';
-
-  // ── قسم كلمات السر (المدير فقط) ──
-  var passwordSection = isAdmin ?
-    '<div class="settings-section"><div class="settings-section-title">🔐 كلمات السر</div>'+
-    '<div style="padding:.85rem 1rem;display:flex;flex-direction:column;gap:.85rem">'+
-    // تغيير باسورد المدير
-    '<div>'+
-    '<div style="font-size:.78rem;font-weight:700;color:var(--ink2);margin-bottom:.45rem">🔑 كلمة سر المدير الجديدة</div>'+
-    '<div style="display:flex;gap:.5rem">'+
-    '<input type="password" id="new_admin_pw" placeholder="كلمة سر جديدة..." style="flex:1;padding:.6rem .85rem;background:var(--bg2);border:1.5px solid var(--border2);border-radius:10px;font-family:Cairo,sans-serif;font-size:.9rem;color:var(--ink);outline:none">'+
-    '<button onclick="changeAdminPw()" style="padding:.6rem .9rem;background:linear-gradient(135deg,#2c1a0e,#4a2c14);border:1px solid var(--gold);border-radius:10px;font-family:Cairo,sans-serif;font-size:.8rem;font-weight:700;color:#f5e6c0;cursor:pointer">حفظ</button>'+
-    '</div></div>'+
-    // تغيير باسورد اليوزر
-    '<div>'+
-    '<div style="font-size:.78rem;font-weight:700;color:var(--ink2);margin-bottom:.45rem">👤 كلمة سر المستخدم الجديدة</div>'+
-    '<div style="display:flex;gap:.5rem">'+
-    '<input type="password" id="new_user_pw" placeholder="كلمة سر جديدة..." style="flex:1;padding:.6rem .85rem;background:var(--bg2);border:1.5px solid var(--border2);border-radius:10px;font-family:Cairo,sans-serif;font-size:.9rem;color:var(--ink);outline:none">'+
-    '<button onclick="changeUserPw()" style="padding:.6rem .9rem;background:linear-gradient(135deg,var(--teal),var(--teal2));border:none;border-radius:10px;font-family:Cairo,sans-serif;font-size:.8rem;font-weight:700;color:white;cursor:pointer">حفظ</button>'+
-    '</div></div>'+
-    '</div></div>'
-  : '';
-
-  document.getElementById('settingsPage').innerHTML =
-    workersSection + modelsSection + colorsSection + exportSection + passwordSection;
-}
-
-function changeAdminPw() {
-  var np = document.getElementById('new_admin_pw').value.trim();
-  if(np.length < 4){ toast('يجب أن تكون 4 أحرف على الأقل','error'); return; }
-  ADMIN_PASSWORD = np;
-  document.getElementById('new_admin_pw').value='';
-  toast('تم تغيير كلمة سر المدير ✓','success');
-}
-function changeUserPw() {
-  var np = document.getElementById('new_user_pw').value.trim();
-  if(np.length < 4){ toast('يجب أن تكون 4 أحرف على الأقل','error'); return; }
-  USER_PASSWORD = np;
-  document.getElementById('new_user_pw').value='';
-  toast('تم تغيير كلمة سر المستخدم ✓','success');
-}
-
-// ── Helpers ───────────────────────────────────────────
-function gch(n){var c=colors.find(function(c){return c.name===n;});return c?c.hex:'#aaa';}
-
-// ── Backup / Restore ──────────────────────────────────
-function triggerRestore(){
-  var el = document.getElementById('restoreInput');
-  if(el) el.click();
-}
-
-function backupJSON(){
-  var data = {
-    version: 1,
-    exportedAt: new Date().toISOString(),
-    workers: workers,
-    models:  models,
-    colors:  colors,
-    records: records.map(function(r){
-      return {worker:r.worker,model:r.model,size:r.size,color:r.color,qty:r.qty,date:r.date,note:r.note||'',createdAt:r.createdAt||0};
-    })
+function saveFirebaseConfig() {
+  const cfg = {
+    apiKey:      document.getElementById('fb-apikey').value.trim(),
+    databaseURL: document.getElementById('fb-dburl').value.trim(),
+    projectId:   document.getElementById('fb-projectid').value.trim(),
+    appId:       document.getElementById('fb-appid').value.trim(),
   };
-  var blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
-  var url  = URL.createObjectURL(blob);
-  var a    = document.createElement('a');
-  var d    = new Date();
-  a.href   = url;
-  a.download = 'ورشة_نسخة_احتياطية_'+d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+'.json';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  toast('تم حفظ النسخة الاحتياطية ✓','success');
+  if (!cfg.apiKey || !cfg.databaseURL) { showToast('⚠️ أدخل apiKey و databaseURL على الأقل'); return; }
+  localStorage.setItem('fb_config', JSON.stringify(cfg));
+  showToast('✅ تم حفظ إعدادات Firebase — أعد تحميل الصفحة');
+  setTimeout(() => location.reload(), 1500);
 }
 
-function restoreJSON(input){
-  var file = input.files[0];
-  if(!file) return;
-  var reader = new FileReader();
-  reader.onload = function(e){
-    try {
-      var data = JSON.parse(e.target.result);
-      if(!data.records || !data.workers){toast('ملف غير صالح','error');return;}
-      if(!confirm('⚠️ هل أنت متأكد؟ سيتم استبدال جميع البيانات الحالية.\n\nالسجلات في الملف: '+data.records.length+'\nالموظفات: '+data.workers.join('، '))){return;}
-      if(!db){toast('يجب الاتصال بـ Firebase أولاً','error');return;}
-      toast('جاري الاستعادة...','info');
-      syncBadge('syncing');
-      // Save settings
-      db.collection('settings').doc('workshop_config').set({
-        workers: data.workers, models: data.models, colors: data.colors
-      }).then(function(){
-        // Delete existing records then re-add
-        return db.collection('records').get();
-      }).then(function(snap){
-        var batch = db.batch();
-        snap.docs.forEach(function(d){ batch.delete(d.ref); });
-        return batch.commit();
-      }).then(function(){
-        // Add restored records in batches of 500
-        var recs = data.records;
-        var batches = [];
-        for(var i=0; i<recs.length; i+=400){
-          batches.push(recs.slice(i,i+400));
-        }
-        return batches.reduce(function(p, chunk){
-          return p.then(function(){
-            var b = db.batch();
-            chunk.forEach(function(r){
-              b.set(db.collection('records').doc(), r);
-            });
-            return b.commit();
-          });
-        }, Promise.resolve());
-      }).then(function(){
-        toast('تمت الاستعادة بنجاح ✓ ('+data.records.length+' سجل)','success');
-        syncBadge('ok');
-      }).catch(function(err){
-        toast('خطأ في الاستعادة','error');
-        syncBadge('err');
-        console.error(err);
-      });
-    } catch(err){
-      toast('ملف تالف أو غير صالح','error');
-    }
+function toggleFirebaseSetup() {
+  const el = document.getElementById('firebase-setup');
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+  // pre-fill if saved
+  const cfg = loadFirebaseConfig();
+  if (cfg) {
+    document.getElementById('fb-apikey').value    = cfg.apiKey    || '';
+    document.getElementById('fb-dburl').value     = cfg.databaseURL || '';
+    document.getElementById('fb-projectid').value = cfg.projectId || '';
+    document.getElementById('fb-appid').value     = cfg.appId     || '';
+  }
+}
+
+// ══════════════ CLOUD BAR ══════════════
+function updateCloudBar(status) {
+  const bar  = document.getElementById('cloud-bar');
+  const text = document.getElementById('cloud-status-text');
+  const box  = document.getElementById('firebase-status-box');
+  if (status === 'connected') {
+    bar.className = 'cloud-bar'; bar.style.background = 'var(--emerald)';
+    text.textContent = '☁️ متصل بـ Firebase — التزامن السحابي مفعّل';
+    box.className = 'firebase-status connected';
+    box.innerHTML = '<span>🟢</span><div><div style="font-weight:800;">متصل بـ Firebase</div><div style="font-size:0.72rem;font-weight:400;margin-top:2px;">البيانات تُحفظ في السحابة وتتزامن بين الأجهزة</div></div>';
+  } else if (status === 'offline') {
+    bar.className = 'cloud-bar offline';
+    text.textContent = '⚠️ غير متصل — البيانات محفوظة محلياً';
+    box.className = 'firebase-status disconnected';
+    box.innerHTML = '<span>🔴</span><div><div style="font-weight:800;">خطأ في الاتصال</div><div style="font-size:0.72rem;font-weight:400;margin-top:2px;">تحقق من إعدادات Firebase وكلمة المرور في console.firebase.google.com</div></div>';
+  } else if (status === 'syncing') {
+    bar.className = 'cloud-bar';
+    text.textContent = '🔄 جار التزامن...';
+  } else {
+    bar.className = 'cloud-bar local';
+    text.textContent = '💾 وضع محلي — لم يتم ربط Firebase بعد';
+  }
+}
+
+// ══════════════ FIREBASE SYNC CALLBACK ══════════════
+window._app = {
+  onFirebaseSync() {
+    renderSelects(); renderTags(); renderTable(); updateStats();
+    updateCloudBar('connected');
+    updateBackupInfo();
+  }
+};
+
+// ══════════════ LOGIN ══════════════
+function getPwd() { return localStorage.getItem('workshop_pwd') || DEFAULT_PWD; }
+
+function doLogin() {
+  if (document.getElementById('pwd-inp').value === getPwd()) {
+    document.getElementById('login-screen').classList.add('hidden');
+    if (!window._appReady) { loadLocal(); initApp(); window._appReady = true; }
+  } else {
+    const e = document.getElementById('login-error');
+    e.textContent = '❌ كلمة المرور غير صحيحة';
+    document.getElementById('pwd-inp').value = '';
+    setTimeout(() => e.textContent = '', 3000);
+  }
+}
+function doLogout() {
+  document.getElementById('login-screen').classList.remove('hidden');
+  document.getElementById('pwd-inp').value = '';
+}
+function togglePwdVis(id, btn) {
+  const inp = document.getElementById(id);
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+  btn.textContent = inp.type === 'password' ? '👁' : '🙈';
+}
+document.getElementById('pwd-inp').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+
+// ══════════════ INIT ══════════════
+function initApp() {
+  document.getElementById('inp-date').valueAsDate = new Date();
+  // If firebase already connected via module, data arrives via onValue
+  if (window._firebase?.configured) {
+    // data will come from onValue listener
+    setTimeout(() => { if(S().records.length === 0) { loadLocal(); } }, 2000);
+    updateCloudBar('connected');
+  }
+  renderSelects(); renderTags(); renderTable(); updateStats(); updateBackupInfo();
+}
+
+// ══════════════ TABS ══════════════
+function switchTab(tab) {
+  currentTab = tab;
+  ['out','in','report','backup'].forEach(t => {
+    document.getElementById('nav-'+t)?.classList.toggle('active', t===tab);
+  });
+  const isData   = tab==='out'||tab==='in';
+  const isReport = tab==='report';
+  const isBackup = tab==='backup';
+  document.getElementById('form-section').style.display   = isData   ? 'block' : 'none';
+  document.getElementById('report-section').style.display = isReport ? 'block' : 'none';
+  document.getElementById('backup-section').style.display = isBackup ? 'block' : 'none';
+  document.getElementById('stats-row').style.display      = isData   ? 'grid'  : 'none';
+  if (isData) {
+    document.getElementById('form-title').textContent   = tab==='out' ? '✏️ تسجيل جبة — خارج من الورشة' : '✏️ تسجيل جبة — واردة بعد الخياطة';
+    document.getElementById('table-title').textContent  = tab==='out' ? '📤 الجبب خارج من الورشة' : '📥 الجبب الواردة بعد الخياطة';
+    renderTable();
+  }
+  if (isReport) {
+    const sel=document.getElementById('rep-tailor'), cur=sel.value;
+    sel.innerHTML='<option value="">كل الخياطين</option>'+S().tailors.map(t=>`<option value="${t}"${t===cur?' selected':''}>${t}</option>`).join('');
+    renderReport();
+  }
+}
+
+// ══════════════ SELECTS & TAGS ══════════════
+function renderSelects() {
+  ['inp-model','edit-model'].forEach(id => {
+    const sel=document.getElementById(id), cur=sel.value;
+    sel.innerHTML='<option value="">— اختر الموديل —</option>'+S().models.map(m=>`<option value="${m}"${m===cur?' selected':''}>${m}</option>`).join('');
+  });
+  ['inp-tailor','edit-tailor','filter-tailor'].forEach(id => {
+    const sel=document.getElementById(id), cur=sel.value;
+    const ph = id==='filter-tailor' ? '<option value="">كل الخياطين</option>' : '<option value="">— اختر الخياط —</option>';
+    sel.innerHTML=ph+S().tailors.map(t=>`<option value="${t}"${t===cur?' selected':''}>${t}</option>`).join('');
+  });
+}
+
+function renderTags() {
+  document.getElementById('models-tags').innerHTML  = S().models.map((m,i)=>`<span class="tag">${m}<span class="tag-del" onclick="delModel(${i})">✕</span></span>`).join('');
+  document.getElementById('tailors-tags').innerHTML = S().tailors.map((t,i)=>`<span class="tag">${t}<span class="tag-del" onclick="delTailor(${i})">✕</span></span>`).join('');
+}
+
+function addModel()  { const v=document.getElementById('new-model').value.trim(); if(!v)return; if(S().models.includes(v)){showToast('⚠️ الموديل موجود');return;} S().models.push(v); document.getElementById('new-model').value=''; save(); renderSelects(); renderTags(); showToast(`✅ تمت إضافة: ${v}`); }
+function delModel(i) { S().models.splice(i,1); save(); renderSelects(); renderTags(); }
+function addTailor()  { const v=document.getElementById('new-tailor').value.trim(); if(!v)return; if(S().tailors.includes(v)){showToast('⚠️ الخياط موجود');return;} S().tailors.push(v); document.getElementById('new-tailor').value=''; save(); renderSelects(); renderTags(); showToast(`✅ تمت إضافة: ${v}`); }
+function delTailor(i) { S().tailors.splice(i,1); save(); renderSelects(); renderTags(); }
+
+// ══════════════ ADD RECORD ══════════════
+function addRecord() {
+  const model=document.getElementById('inp-model').value, tailor=document.getElementById('inp-tailor').value;
+  const count=parseInt(document.getElementById('inp-count').value), date=document.getElementById('inp-date').value;
+  if(!model){showToast('⚠️ اختر الموديل');return;}
+  if(!tailor){showToast('⚠️ اختر الخياط');return;}
+  if(!count||count<1){showToast('⚠️ أدخل عدداً صحيحاً');return;}
+  if(!date){showToast('⚠️ اختر التاريخ');return;}
+  S().records.push({id: Date.now(), type: currentTab, model, tailor, count, date});
+  save(); renderTable(); updateStats();
+  document.getElementById('inp-model').value='';
+  document.getElementById('inp-tailor').value='';
+  document.getElementById('inp-count').value='';
+  showToast(`✅ تم تسجيل ${count} جبة`);
+}
+
+// ══════════════ RENDER TABLE ══════════════
+function renderTable() {
+  const search=document.getElementById('search-inp').value.toLowerCase();
+  const ft=document.getElementById('filter-tailor').value;
+  const filtered=S().records.filter(r=>{
+    if(r.type!==currentTab)return false;
+    if(ft&&r.tailor!==ft)return false;
+    if(search&&!r.model.includes(search)&&!r.tailor.includes(search))return false;
+    return true;
+  });
+  const list=document.getElementById('records-list');
+  if(!filtered.length) {
+    list.innerHTML=`<div class="empty-state"><div class="empty-icon">${currentTab==='out'?'📤':'📥'}</div><p>لا توجد سجلات حتى الآن</p></div>`;
+  } else {
+    list.innerHTML=[...filtered].reverse().map((r,i)=>`
+      <div class="record-item">
+        <div style="color:#ccc;font-size:0.7rem;min-width:22px;text-align:center;">${filtered.length-i}</div>
+        <div class="record-info">
+          <div class="record-model">${r.model}</div>
+          <div class="record-tailor">🧵 ${r.tailor}</div>
+          <div class="record-meta">📅 ${formatDate(r.date)}</div>
+        </div>
+        <div class="record-count">${r.count}</div>
+        <div class="record-actions">
+          <button class="btn-edit" onclick="openEdit(${r.id})">✏️</button>
+          <button class="btn-del"  onclick="askDelete(${r.id})">🗑️</button>
+        </div>
+      </div>`).join('');
+  }
+  const total=filtered.reduce((s,r)=>s+r.count,0);
+  document.getElementById('table-total').textContent=`المجموع: ${total} جبة`;
+  document.getElementById('count-out').textContent=S().records.filter(r=>r.type==='out').length;
+  document.getElementById('count-in').textContent =S().records.filter(r=>r.type==='in').length;
+}
+
+function updateStats() {
+  const out=S().records.filter(r=>r.type==='out').reduce((s,r)=>s+r.count,0);
+  const inn=S().records.filter(r=>r.type==='in').reduce((s,r)=>s+r.count,0);
+  document.getElementById('stat-out').textContent=out;
+  document.getElementById('stat-in').textContent=inn;
+}
+
+// ══════════════ EDIT ══════════════
+function openEdit(id) {
+  const r=S().records.find(x=>x.id===id); if(!r)return;
+  renderSelects();
+  document.getElementById('edit-id').value=id;
+  document.getElementById('edit-model').value=r.model;
+  document.getElementById('edit-tailor').value=r.tailor;
+  document.getElementById('edit-count').value=r.count;
+  document.getElementById('edit-date').value=r.date;
+  document.getElementById('edit-modal').classList.add('open');
+}
+function saveEdit() {
+  const id=parseInt(document.getElementById('edit-id').value);
+  const model=document.getElementById('edit-model').value, tailor=document.getElementById('edit-tailor').value;
+  const count=parseInt(document.getElementById('edit-count').value), date=document.getElementById('edit-date').value;
+  if(!model||!tailor||!count||!date){showToast('⚠️ أكمل جميع الحقول');return;}
+  const idx=S().records.findIndex(x=>x.id===id);
+  if(idx>-1){S().records[idx]={...S().records[idx],model,tailor,count,date}; save(); renderTable(); updateStats(); showToast('✅ تم حفظ التعديل');}
+  closeModal();
+}
+function closeModal(){document.getElementById('edit-modal').classList.remove('open');}
+
+// ══════════════ DELETE ══════════════
+function askDelete(id) {
+  deleteId=id;
+  document.getElementById('confirm-icon').textContent='⚠️';
+  document.getElementById('confirm-title').textContent='تأكيد الحذف';
+  document.getElementById('confirm-msg').textContent='هل أنت متأكد من حذف هذا السجل؟';
+  document.getElementById('confirm-action-btn').style.background='linear-gradient(135deg,#c0392b,#e74c3c)';
+  document.getElementById('confirm-action-btn').textContent='🗑️ حذف';
+  confirmCallback=()=>{ S().records=S().records.filter(r=>r.id!==deleteId); save(); renderTable(); updateStats(); showToast('🗑️ تم الحذف'); closeConfirm(); };
+  document.getElementById('confirm-modal').classList.add('open');
+}
+function askResetAll() {
+  document.getElementById('confirm-icon').textContent='💥';
+  document.getElementById('confirm-title').textContent='مسح جميع البيانات';
+  document.getElementById('confirm-msg').textContent='سيتم حذف جميع السجلات نهائياً! لا يمكن التراجع عنه.';
+  document.getElementById('confirm-action-btn').style.background='linear-gradient(135deg,#7b241c,#c0392b)';
+  document.getElementById('confirm-action-btn').textContent='💥 مسح الكل';
+  confirmCallback=()=>{ S().records=[]; save(); renderTable(); updateStats(); showToast('🗑️ تم مسح جميع البيانات'); closeConfirm(); };
+  document.getElementById('confirm-modal').classList.add('open');
+}
+document.getElementById('confirm-action-btn').addEventListener('click',()=>{ if(confirmCallback)confirmCallback(); });
+function closeConfirm(){document.getElementById('confirm-modal').classList.remove('open');confirmCallback=null;deleteId=null;}
+
+// ══════════════ SETTINGS ══════════════
+function toggleSettings(){document.getElementById('settings-panel').classList.toggle('open');}
+
+// ══════════════ HELPERS ══════════════
+function formatDate(d){if(!d)return'—';const[y,m,day]=d.split('-');return`${day}/${m}/${y}`;}
+let toastTimer;
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2800);}
+
+// ══════════════ REPORT ══════════════
+function renderReport() {
+  const from=document.getElementById('rep-from').value, to=document.getElementById('rep-to').value;
+  const ft=document.getElementById('rep-tailor').value;
+  let data=S().records.filter(r=>{ if(ft&&r.tailor!==ft)return false; if(from&&r.date<from)return false; if(to&&r.date>to)return false; return true; });
+  const outAll=data.filter(r=>r.type==='out'), inAll=data.filter(r=>r.type==='in');
+  const totalOut=outAll.reduce((s,r)=>s+r.count,0), totalIn=inAll.reduce((s,r)=>s+r.count,0), diff=totalOut-totalIn;
+  document.getElementById('rep-stats').innerHTML=`
+    <div class="stat-card gold"><div class="stat-num">${totalOut}</div><div class="stat-label">📤 إجمالي الصادر</div></div>
+    <div class="stat-card green"><div class="stat-num">${totalIn}</div><div class="stat-label">📥 إجمالي الوارد</div></div>
+    <div class="stat-card brown"><div class="stat-num" style="color:${diff>0?'#c0392b':diff===0?'#1a6b4a':'#2980b9'}">${diff>0?'+':''}${diff}</div><div class="stat-label">⚖️ لم يعد</div></div>
+    <div class="stat-card gold"><div class="stat-num">${totalOut>0?Math.round(totalIn/totalOut*100):0}%</div><div class="stat-label">📊 نسبة العودة</div></div>`;
+  const allModels=[...new Set([...outAll.map(r=>r.model),...inAll.map(r=>r.model)])];
+  const modelRows=allModels.map(m=>{const mOut=outAll.filter(r=>r.model===m).reduce((s,r)=>s+r.count,0),mIn=inAll.filter(r=>r.model===m).reduce((s,r)=>s+r.count,0),mDiff=mOut-mIn,pct=mOut>0?Math.round(mIn/mOut*100):0;return{m,mOut,mIn,mDiff,pct};}).filter(x=>x.mOut>0||x.mIn>0);
+  document.getElementById('rep-model-body').innerHTML=modelRows.map(({m,mOut,mIn,mDiff,pct})=>`<tr><td class="td-model">${m}</td><td style="text-align:center;font-weight:700;color:#856404;">${mOut}</td><td style="text-align:center;font-weight:700;color:#0e6655;">${mIn}</td><td style="text-align:center;" class="${mDiff>0?'diff-pos':mDiff===0?'diff-zero':'diff-neg'}">${mDiff>0?'+':''}${mDiff}</td><td style="text-align:center;white-space:nowrap;font-size:0.78rem;"><span class="rep-bar-wrap"><span class="rep-bar-fill" style="width:${pct}%"></span></span>${pct}%</td></tr>`).join('')||`<tr><td colspan="5" style="text-align:center;padding:30px;color:#bbb;">لا توجد بيانات</td></tr>`;
+  document.getElementById('rep-model-foot').innerHTML=modelRows.length?`<tr><td>📌 الإجمالي</td><td style="text-align:center;">${totalOut}</td><td style="text-align:center;">${totalIn}</td><td style="text-align:center;">${diff>0?'+':''}${diff}</td><td style="text-align:center;">${totalOut>0?Math.round(totalIn/totalOut*100):0}%</td></tr>`:'';
+  const tailorScope=ft?[ft]:[...new Set([...outAll.map(r=>r.tailor),...inAll.map(r=>r.tailor)])];
+  document.getElementById('rep-tailor-body').innerHTML=tailorScope.map(t=>{const tOut=outAll.filter(r=>r.tailor===t).reduce((s,r)=>s+r.count,0),tIn=inAll.filter(r=>r.tailor===t).reduce((s,r)=>s+r.count,0);if(!tOut&&!tIn)return'';const tDiff=tOut-tIn;return`<tr><td class="td-tailor" style="font-weight:700;">${t}</td><td style="text-align:center;font-weight:700;color:#856404;">${tOut}</td><td style="text-align:center;font-weight:700;color:#0e6655;">${tIn}</td><td style="text-align:center;" class="${tDiff>0?'diff-pos':tDiff===0?'diff-zero':'diff-neg'}">${tDiff>0?'+':''}${tDiff}</td></tr>`;}).join('')||`<tr><td colspan="4" style="text-align:center;padding:30px;color:#bbb;">لا توجد بيانات</td></tr>`;
+}
+function resetReport(){document.getElementById('rep-from').value='';document.getElementById('rep-to').value='';document.getElementById('rep-tailor').value='';renderReport();}
+
+// ══════════════ BACKUP ══════════════
+function updateBackupInfo() {
+  const c=S().records.length,o=S().records.filter(r=>r.type==='out').length,i=S().records.filter(r=>r.type==='in').length;
+  const el=document.getElementById('backup-info');
+  if(el) el.textContent=`إجمالي السجلات: ${c} | صادر: ${o} | وارد: ${i}`;
+}
+
+function exportJSON() {
+  const d={version:2,exportDate:new Date().toISOString(),...S()};
+  const blob=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url;
+  const now=new Date();
+  a.download=`ورشة_${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}.json`;
+  a.click(); URL.revokeObjectURL(url); showToast('✅ تم تصدير النسخة الاحتياطية');
+}
+
+function importJSON(event) {
+  const file=event.target.files[0]; if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const d=JSON.parse(e.target.result);
+      if(!d.records)throw new Error();
+      S().models=d.models||S().models; S().tailors=d.tailors||S().tailors; S().records=d.records||[];
+      save(); renderSelects(); renderTags(); renderTable(); updateStats();
+      showToast(`✅ تم استيراد ${S().records.length} سجل`);
+    }catch{showToast('❌ ملف غير صحيح');}
+    event.target.value='';
   };
   reader.readAsText(file);
-  input.value=''; // allow re-selecting same file
 }
 
-// ── Export ────────────────────────────────────────────
-function exportXLSX(){
-  var wb=XLSX.utils.book_new();
-  var am=Array.from(new Set(models.concat(records.map(function(r){return r.model;}))));
-  var r1=[['#','الموظفة','الموديل','المقاس','اللون','العدد','التاريخ','ملاحظة']];
-  records.forEach(function(r,i){r1.push([i+1,r.worker,r.model,r.size,r.color,r.qty,r.date,r.note||'']);});
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(r1),'السجلات');
-  var d=new Date();
-  XLSX.writeFile(wb,'ورشة_الخياطة_'+d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()+'.xlsx');
-  toast('تم التصدير 📊','success');
+function exportExcel() {
+  if(typeof XLSX==='undefined'){showToast('⏳ جار تحميل مكتبة Excel...');return;}
+  const wb=XLSX.utils.book_new();
+  const add=(name,data)=>{const ws=XLSX.utils.aoa_to_sheet(data);XLSX.utils.book_append_sheet(wb,ws,name);};
+  add('جميع السجلات',[['#','النوع','الموديل','الخياط','العدد','التاريخ'],...S().records.map((r,i)=>[i+1,r.type==='out'?'خارج':'وارد',r.model,r.tailor,r.count,formatDate(r.date)])]);
+  add('خارج من الورشة',[['#','الموديل','الخياط','العدد','التاريخ'],...S().records.filter(r=>r.type==='out').map((r,i)=>[i+1,r.model,r.tailor,r.count,formatDate(r.date)])]);
+  add('وارد بعد الخياطة',[['#','الموديل','الخياط','العدد','التاريخ'],...S().records.filter(r=>r.type==='in').map((r,i)=>[i+1,r.model,r.tailor,r.count,formatDate(r.date)])]);
+  const allM=[...new Set(S().records.map(r=>r.model))];
+  add('ملخص الموديلات',[['الموديل','الصادر','الوارد','الفرق','نسبة العودة'],...allM.map(m=>{const o=S().records.filter(r=>r.type==='out'&&r.model===m).reduce((s,r)=>s+r.count,0),i=S().records.filter(r=>r.type==='in'&&r.model===m).reduce((s,r)=>s+r.count,0);return[m,o,i,o-i,(o>0?Math.round(i/o*100):0)+'%'];})]);
+  add('ملخص الخياطين',[['الخياط','الصادر','الوارد','الفرق'],...S().tailors.map(t=>{const o=S().records.filter(r=>r.type==='out'&&r.tailor===t).reduce((s,r)=>s+r.count,0),i=S().records.filter(r=>r.type==='in'&&r.tailor===t).reduce((s,r)=>s+r.count,0);return[t,o,i,o-i];})]);
+  const now=new Date();
+  XLSX.writeFile(wb,`ورشة_${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}.xlsx`);
+  showToast('✅ تم تصدير Excel');
 }
 
-function exportMonthly(){
-  var mr=records.filter(function(r){return r.date&&r.date.startsWith(rYear+'-'+String(rMonth+1).padStart(2,'0'));});
-  var mn=AM[rMonth]+' '+rYear;
-  var wb=XLSX.utils.book_new();
+// ══════════════ PASSWORD ══════════════
+function changePwd() {
+  const old=document.getElementById('pwd-old').value, n1=document.getElementById('pwd-new1').value, n2=document.getElementById('pwd-new2').value;
+  if(old!==getPwd()){showToast('❌ كلمة المرور الحالية غير صحيحة');return;}
+  if(!n1||n1.length<3){showToast('⚠️ كلمة المرور يجب أن تكون 3 أحرف على الأقل');return;}
+  if(n1!==n2){showToast('❌ كلمتا المرور غير متطابقتين');return;}
+  localStorage.setItem('workshop_pwd',n1);
+  document.getElementById('pwd-old').value=''; document.getElementById('pwd-new1').value=''; document.getElementById('pwd-new2').value='';
+  showToast('✅ تم تغيير كلمة المرور');
+}
 
-  // ── ورقة 1: السجلات التفصيلية ──
-  var r1=[['#','الموظفة','الموديل','المقاس','اللون','العدد','التاريخ']];
-  mr.forEach(function(r,i){r1.push([i+1,r.worker,r.model,r.size,r.color,r.qty,r.date]);});
-  var ws1=XLSX.utils.aoa_to_sheet(r1);
-  ws1['!cols']=[{wch:4},{wch:12},{wch:12},{wch:8},{wch:10},{wch:8},{wch:12}];
-  XLSX.utils.book_append_sheet(wb,ws1,'السجلات');
+// ══════════════ PWA INSTALL ══════════════
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  document.getElementById('install-banner').classList.add('visible');
+  document.getElementById('pwa-card').style.display = 'block';
+});
 
-  // ── ورقة 2: إجمالي إنتاج كل موظفة ──
-  var am=Array.from(new Set(mr.map(function(r){return r.model;})));
-  var wt={};
-  workers.forEach(function(w){wt[w]={total:0};am.forEach(function(m){wt[w][m]=0;});});
-  mr.forEach(function(r){
-    if(!wt[r.worker])wt[r.worker]={total:0};
-    if(wt[r.worker][r.model]===undefined)wt[r.worker][r.model]=0;
-    wt[r.worker][r.model]+=r.qty;
-    wt[r.worker].total+=r.qty;
+function installApp() {
+  if (!deferredInstallPrompt) { showToast('📱 افتح المتصفح → قائمة ⋮ → "إضافة إلى الشاشة الرئيسية"'); return; }
+  deferredInstallPrompt.prompt();
+  deferredInstallPrompt.userChoice.then(r => {
+    if (r.outcome === 'accepted') { showToast('✅ تم تثبيت التطبيق!'); document.getElementById('install-banner').classList.remove('visible'); }
+    deferredInstallPrompt = null;
   });
-  // رأس الجدول: الموظفة + الموديلات + الإجمالي
-  var r2=[['التقرير الشهري — '+mn],['']];
-  var header=['الموظفة'].concat(am).concat(['الإجمالي']);
-  r2.push(header);
-  // بيانات كل موظفة
-  var grandTotal=0;
-  var modelTotals={};am.forEach(function(m){modelTotals[m]=0;});
-  workers.forEach(function(w){
-    var wd=wt[w]||{total:0};
-    var row=[w];
-    am.forEach(function(m){row.push(wd[m]||0);modelTotals[m]+=(wd[m]||0);});
-    row.push(wd.total||0);
-    grandTotal+=wd.total||0;
-    r2.push(row);
-  });
-  // صف الإجمالي الكلي
-  var totalRow=['الإجمالي الكلي'];
-  am.forEach(function(m){totalRow.push(modelTotals[m]||0);});
-  totalRow.push(grandTotal);
-  r2.push(['']);
-  r2.push(totalRow);
-  var ws2=XLSX.utils.aoa_to_sheet(r2);
-  var cols=[{wch:14}];am.forEach(function(){cols.push({wch:10});});cols.push({wch:12});
-  ws2['!cols']=cols;
-  XLSX.utils.book_append_sheet(wb,ws2,'إجمالي الموظفات');
-
-  XLSX.writeFile(wb,'تقرير_'+mn.replace(' ','_')+'.xlsx');
-  toast('تم التصدير 📊','success');
 }
 
-// ── Start ─────────────────────────────────────────────
-window.onload = function(){ initApp(); };
-</script>
-  <script>
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("sw.js")
-    .then(() => console.log("Service Worker Registered"))
-    .catch(err => console.error("SW Error", err));
+function dismissInstall() { document.getElementById('install-banner').classList.remove('visible'); }
+
+window.addEventListener('appinstalled', () => {
+  document.getElementById('install-banner').classList.remove('visible');
+  showToast('✅ تم تثبيت التطبيق بنجاح!');
+});
+
+// ══════════════ SERVICE WORKER ══════════════
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
 }
+
+// ══════════════ MODAL CLOSE ══════════════
+document.getElementById('edit-modal').addEventListener('click',function(e){if(e.target===this)closeModal();});
+document.getElementById('confirm-modal').addEventListener('click',function(e){if(e.target===this)closeConfirm();});
+
+// ══════════════ KEYBOARD ══════════════
+document.getElementById('new-model').addEventListener('keydown',e=>{if(e.key==='Enter')addModel();});
+document.getElementById('new-tailor').addEventListener('keydown',e=>{if(e.key==='Enter')addTailor();});
 </script>
 </body>
 </html>
