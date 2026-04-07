@@ -494,7 +494,7 @@ var MC=['#b8892a','#1a6b5c','#8b2a3a','#1a4a8b','#5a2a8b','#2c7a5c','#7a5c2c','#
 var workers=[], models=[], colors=[], records=[];
 var isAdmin=false, isUser=false, currentWorker=null;
 var editingId=null, deletingId=null, selColor='', wSelColor='';
-var filtW='',filtM='',filtC='',filtS='',filtDate='';
+var filtW='',filtM='',filtC='',filtS='',filtDate=new Date().toISOString().split('T')[0];
 var rYear=new Date().getFullYear(), rMonth=new Date().getMonth();
 var curQty=1, wCurQty=1;
 var TODAY = new Date().toISOString().split('T')[0];
