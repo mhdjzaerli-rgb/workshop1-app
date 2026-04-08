@@ -856,9 +856,22 @@ function renderMiniStats(fr) {
     (best?'<div class="mini-stat" style="border-color:var(--gold2)"><div class="mini-stat-icon">🏆</div><div><div class="mini-stat-val" style="color:var(--gold);font-size:.85rem">'+best[0]+'</div><div class="mini-stat-lbl">'+best[1]+' جبة</div></div></div>':'')+'</div>';
 }
 
+function shiftDate(days) {
+  if(!filtDate) filtDate = new Date().toISOString().split('T')[0];
+  var d = new Date(filtDate);
+  d.setDate(d.getDate() + days);
+  filtDate = d.toISOString().split('T')[0];
+  applyFilters();
+  renderAdminFilterBar();
+}
+
 function renderAdminFilterBar() {
   document.getElementById('adminFilterBar').innerHTML=
-    '<div class="filter-chip'+(filtDate?' active-filter':'')+'">📅 <input type="date" value="'+filtDate+'" onchange="filtDate=this.value;applyFilters();renderAdminFilterBar()" style="border:none;background:transparent;font-family:Cairo,sans-serif;font-size:.72rem;color:inherit;outline:none;cursor:pointer;width:110px"></div>'+
+    '<div style="display:flex;align-items:center;gap:.25rem;flex-shrink:0">'+
+    '<button onclick="shiftDate(-1)" style="width:28px;height:28px;border:1px solid var(--border2);background:var(--bg2);border-radius:8px;font-size:.9rem;cursor:pointer;color:var(--ink2);display:flex;align-items:center;justify-content:center;padding:0;">›</button>'+
+    '<div class="filter-chip'+(filtDate?' active-filter':'')+'" style="flex-shrink:0">📅 <input type="date" value="'+filtDate+'" onchange="filtDate=this.value;applyFilters();renderAdminFilterBar()" style="border:none;background:transparent;font-family:Cairo,sans-serif;font-size:.72rem;color:inherit;outline:none;cursor:pointer;width:110px"></div>'+
+    '<button onclick="shiftDate(1)" style="width:28px;height:28px;border:1px solid var(--border2);background:var(--bg2);border-radius:8px;font-size:.9rem;cursor:pointer;color:var(--ink2);display:flex;align-items:center;justify-content:center;padding:0;">‹</button>'+
+    '</div>'+
     '<div class="filter-chip'+(filtW?' active-filter':'')+'">👩 <select onchange="filtW=this.value;applyFilters()" style="max-width:70px"><option value="">الكل</option>'+workers.map(function(w){return '<option'+(w===filtW?' selected':'')+'>'+w+'</option>';}).join('')+'</select></div>'+
     '<div class="filter-chip'+(filtM?' active-filter':'')+'">👗 <select onchange="filtM=this.value;applyFilters()" style="max-width:65px"><option value="">الكل</option>'+models.map(function(m){return '<option'+(m===filtM?' selected':'')+'>'+m+'</option>';}).join('')+'</select></div>'+
     '<div class="filter-chip'+(filtS?' active-filter':'')+'">📐 <select onchange="filtS=this.value;applyFilters()" style="max-width:55px"><option value="">الكل</option>'+['M','L','XL','XXL','3XL'].map(function(s){return '<option'+(s===filtS?' selected':'')+'>'+s+'</option>';}).join('')+'</select></div>'+
