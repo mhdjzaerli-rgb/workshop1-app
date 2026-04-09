@@ -12,6 +12,7 @@
 <!-- Firebase loaded as regular scripts (NO type=module) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Amiri:wght@400;700&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
@@ -475,7 +476,7 @@ var FIREBASE_CONFIG = {
   messagingSenderId: "175989367938",
   appId:             "1:175989367938:web:8afdfbc19c1ac71d55809b"
 };
-var ADMIN_PASSWORD = "admin1234";
+var ADMIN_EMAIL    = "admin@workshop.com"; // الإيميل المستخدم في Firebase Auth
 var USER_PASSWORD  = "0000";  // كلمة سر المستخدم — يمكن للمدير تغييرها
 // ══════════════════════════════════════════════════════
 
@@ -561,6 +562,15 @@ function initApp() {
   try {
     firebase.initializeApp(FIREBASE_CONFIG);
     db = firebase.firestore();
+    var auth = firebase.auth();
+
+    // مراقبة حالة تسجيل دخول المدير
+    auth.onAuthStateChanged(function(user) {
+      if(user) {
+        // المدير مسجّل دخوله عبر Firebase
+        localStorage.setItem('ws_session','admin');
+      }
+    });
 
     // Test connection
     db.collection('settings').doc('workshop_config').get()
@@ -651,22 +661,33 @@ function closeAdminLogin() {
   document.getElementById('adminPw').value='';
 }
 function tryAdminLogin() {
-  var pw = document.getElementById('adminPw').value;
-  if(pw === ADMIN_PASSWORD) {
-    isAdmin=true; isUser=false; currentWorker=null;
-    localStorage.setItem('ws_session','admin');
-    closeAdminLogin();
-    setScreen('adminApp');
-    document.getElementById('adminRoleLabel').textContent='لوحة المدير';
-    showAdminPage('records');
-    refreshAdmin();
-    syncBadge('ok');
-  } else {
-    var err = document.getElementById('adminPwErr');
-    err.style.display='block';
-    document.getElementById('adminPw').value='';
-    setTimeout(function(){err.style.display='none';},2500);
-  }
+  var pw  = document.getElementById('adminPw').value;
+  var err = document.getElementById('adminPwErr');
+  if(!pw) return;
+
+  var btn = document.querySelector('.apw-submit');
+  if(btn){ btn.disabled=true; btn.textContent='⏳ جاري الدخول...'; }
+
+  var auth = firebase.auth();
+  auth.signInWithEmailAndPassword(ADMIN_EMAIL, pw)
+    .then(function() {
+      isAdmin=true; isUser=false; currentWorker=null;
+      localStorage.setItem('ws_session','admin');
+      closeAdminLogin();
+      setScreen('adminApp');
+      document.getElementById('adminRoleLabel').textContent='لوحة المدير';
+      showAdminPage('records');
+      refreshAdmin();
+      syncBadge('ok');
+      if(btn){ btn.disabled=false; btn.textContent='دخول'; }
+    })
+    .catch(function(e) {
+      err.style.display='block';
+      err.textContent = (e.code==='auth/too-many-requests') ? 'محاولات كثيرة، حاول لاحقاً' : 'كلمة المرور غير صحيحة';
+      document.getElementById('adminPw').value='';
+      setTimeout(function(){err.style.display='none'; err.textContent='كلمة المرور غير صحيحة';},2500);
+      if(btn){ btn.disabled=false; btn.textContent='دخول'; }
+    });
 }
 
 function openUserLogin() {
@@ -699,7 +720,10 @@ function adminLogout() {
   isAdmin=false; isUser=false;
   localStorage.removeItem('ws_session');
   localStorage.removeItem('ws_worker');
+  // تسجيل خروج Firebase للمدير
+  try { firebase.auth().signOut(); } catch(e) {}
   setScreen('home');
+  renderHome();
 }
 function goHome() {
   currentWorker=null; isAdmin=false; isUser=false;
