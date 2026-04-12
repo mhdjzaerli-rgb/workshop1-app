@@ -13,6 +13,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Amiri:wght@400;700&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
@@ -122,11 +123,18 @@ html,body{height:100%;overflow:hidden;font-family:'Cairo',sans-serif;background:
 .sec-header{display:flex;align-items:center;justify-content:space-between;padding:.75rem 1rem .5rem;}
 .sec-title{font-family:'Amiri',serif;font-size:1rem;font-weight:700;color:var(--ink);}
 .sec-count{font-size:.7rem;color:var(--ink3);background:var(--bg2);padding:.15rem .5rem;border-radius:12px;}
-.filter-scroll{display:flex;flex-direction:column;gap:.45rem;padding:.5rem 1rem;}
-.filter-chip{display:flex;align-items:center;gap:.35rem;padding:.38rem .8rem;background:var(--surface);border:1px solid var(--border2);border-radius:20px;font-family:'Cairo',sans-serif;font-size:.75rem;font-weight:600;color:var(--ink2);cursor:pointer;white-space:nowrap;flex-shrink:0;}
-.filter-chip.active-filter{background:var(--gold);color:white;border-color:var(--gold);}
-.filter-chip select{border:none;background:transparent;font-family:'Cairo',sans-serif;font-size:.75rem;font-weight:600;color:inherit;outline:none;cursor:pointer;}
-.filter-chip.active-filter select{color:white;}
+.filter-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;padding:.6rem 1rem;}
+.filter-cell{display:flex;flex-direction:column;gap:.2rem;}
+.filter-label{font-size:.6rem;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.04em;padding-right:.3rem;}
+.filter-chip{display:flex;align-items:center;gap:.3rem;padding:.42rem .7rem;background:var(--surface);border:1.5px solid var(--border2);border-radius:10px;font-family:'Cairo',sans-serif;font-size:.78rem;font-weight:600;color:var(--ink2);width:100%;min-height:38px;}
+.filter-chip.active-filter{background:var(--gold-light);color:var(--gold);border-color:var(--gold);}
+.filter-chip select{border:none;background:transparent;font-family:'Cairo',sans-serif;font-size:.78rem;font-weight:600;color:inherit;outline:none;cursor:pointer;flex:1;min-width:0;}
+.filter-chip.active-filter select{color:var(--gold);}
+.filter-chip input[type=date]{border:none;background:transparent;font-family:'Cairo',sans-serif;font-size:.78rem;color:inherit;outline:none;cursor:pointer;flex:1;min-width:0;}
+.filter-date-row{display:flex;align-items:center;gap:.3rem;width:100%;}
+.fdate-arr{width:24px;height:24px;border:1px solid var(--border2);background:var(--bg2);border-radius:6px;font-size:.85rem;cursor:pointer;color:var(--ink2);display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0;}
+.filter-clear{grid-column:1/-1;display:flex;align-items:center;justify-content:center;gap:.4rem;padding:.5rem;background:var(--bg2);border:1.5px solid var(--border2);border-radius:10px;font-family:'Cairo',sans-serif;font-size:.78rem;font-weight:700;color:var(--ink2);cursor:pointer;width:100%;}
+.filter-clear:active{background:var(--rose-light);color:var(--rose);border-color:var(--rose);}
 .cards-list{display:flex;flex-direction:column;gap:.65rem;padding:0 .85rem .5rem;}
 .rec-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:.85rem;}
 .rec-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:.55rem;}
@@ -286,8 +294,9 @@ html,body{height:100%;overflow:hidden;font-family:'Cairo',sans-serif;background:
 .pwa-btns{display:flex;gap:.5rem;margin-top:.45rem;}
 .pwa-yes{padding:.4rem .85rem;background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;border-radius:8px;font-family:'Cairo',sans-serif;font-size:.76rem;font-weight:700;color:white;cursor:pointer;}
 .pwa-no{padding:.4rem .7rem;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:8px;font-family:'Cairo',sans-serif;font-size:.74rem;color:rgba(255,255,255,.6);cursor:pointer;}
-.filter-row-line{display:flex;gap:.45rem;align-items:center;}
+/* filter-row-line replaced by filter-grid */
 </style>
+
 </head>
 <body>
 
