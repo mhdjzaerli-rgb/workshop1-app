@@ -932,27 +932,74 @@ function shiftDate(days) {
 }
 
 function renderAdminFilterBar() {
-  var row1=
-    '<div class="filter-row-line">'+
-    '<div style="display:flex;align-items:center;gap:.25rem;flex-shrink:0">'+
-    '<button onclick="shiftDate(-1)" style="width:28px;height:28px;border:1px solid var(--border2);background:var(--bg2);border-radius:8px;font-size:.9rem;cursor:pointer;color:var(--ink2);display:flex;align-items:center;justify-content:center;padding:0;">\u203a</button>'+
-    '<div class="filter-chip'+(filtDate?' active-filter':'')+'" style="flex-shrink:0">\ud83d\udcc5 <input type="date" value="'+filtDate+'" onchange="filtDate=this.value;applyFilters();renderAdminFilterBar()" style="border:none;background:transparent;font-family:Cairo,sans-serif;font-size:.72rem;color:inherit;outline:none;cursor:pointer;width:100px"></div>'+
-    '<button onclick="shiftDate(1)" style="width:28px;height:28px;border:1px solid var(--border2);background:var(--bg2);border-radius:8px;font-size:.9rem;cursor:pointer;color:var(--ink2);display:flex;align-items:center;justify-content:center;padding:0;">\u2039</button>'+
-    '</div>'+
-    '<div class="filter-chip'+(filtW?' active-filter':'')+'" style="flex:1">\ud83d\udc69 <select onchange="filtW=this.value;applyFilters()" style="max-width:90px;width:100%"><option value="">\u0627\u0644\u0643\u0644</option>'+workers.map(function(w){return '<option'+(w===filtW?' selected':'')+'>'+w+'</option>';}).join('')+'</select></div>'+
-    '</div>';
-  var row2=
-    '<div class="filter-row-line">'+
-    '<div class="filter-chip'+(filtM?' active-filter':'')+'" style="flex:1">\ud83d\udc57 <select onchange="filtM=this.value;applyFilters()" style="width:100%;max-width:140px"><option value="">\u0627\u0644\u0643\u0644</option>'+models.map(function(m){return '<option'+(m===filtM?' selected':'')+'>'+m+'</option>';}).join('')+'</select></div>'+
-    '<div class="filter-chip'+(filtS?' active-filter':'')+'" style="flex:1">\ud83d\udcd0 <select onchange="filtS=this.value;applyFilters()" style="width:100%;max-width:100px"><option value="">\u0627\u0644\u0643\u0644</option>'+['M','L','XL','XXL','3XL'].map(function(s){return '<option'+(s===filtS?' selected':'')+'>'+s+'</option>';}).join('')+'</select></div>'+
-    '</div>';
-  var row3=
-    '<div class="filter-row-line">'+
-    '<div class="filter-chip'+(filtC?' active-filter':'')+'" style="flex:1">\ud83c\udfa8 <select onchange="filtC=this.value;applyFilters()" style="width:100%;max-width:140px"><option value="">\u0627\u0644\u0643\u0644</option>'+colors.map(function(c){return '<option value="'+c.name+'"'+(c.name===filtC?' selected':'')+'>'+c.name+'</option>';}).join('')+'</select></div>'+
-    '<div class="filter-chip" style="flex-shrink:0;white-space:nowrap" onclick="filtW=\'\';filtM=\'\';filtS=\'\';filtC=\'\';filtDate=\'\';applyFilters();renderAdminFilterBar()">\u2715 \u0645\u0633\u062d</div>'+
-    '</div>';
-  document.getElementById('adminFilterBar').innerHTML=row1+row2+row3;
+  var html = '<div class="filter-grid">';
+
+  // خلية 1: التاريخ
+  html += '<div class="filter-cell">' +
+    '<span class="filter-label">التاريخ</span>' +
+    '<div class="filter-chip' + (filtDate ? ' active-filter' : '') + '">' +
+      '<div class="filter-date-row">' +
+        '<button class="fdate-arr" onclick="shiftDate(-1)">›</button>' +
+        '<input type="date" value="' + filtDate + '" onchange="filtDate=this.value;applyFilters();renderAdminFilterBar()">' +
+        '<button class="fdate-arr" onclick="shiftDate(1)">‹</button>' +
+      '</div>' +
+    '</div>' +
+  '</div>';
+
+  // خلية 2: الموظفة
+  html += '<div class="filter-cell">' +
+    '<span class="filter-label">الموظفة</span>' +
+    '<div class="filter-chip' + (filtW ? ' active-filter' : '') + '">' +
+      '👩 <select onchange="filtW=this.value;applyFilters()">' +
+        '<option value="">الكل</option>' +
+        workers.map(function(w){return '<option'+(w===filtW?' selected':'')+'>'+w+'</option>';}).join('') +
+      '</select>' +
+    '</div>' +
+  '</div>';
+
+  // خلية 3: الموديل
+  html += '<div class="filter-cell">' +
+    '<span class="filter-label">الموديل</span>' +
+    '<div class="filter-chip' + (filtM ? ' active-filter' : '') + '">' +
+      '👗 <select onchange="filtM=this.value;applyFilters()">' +
+        '<option value="">الكل</option>' +
+        models.map(function(m){return '<option'+(m===filtM?' selected':'')+'>'+m+'</option>';}).join('') +
+      '</select>' +
+    '</div>' +
+  '</div>';
+
+  // خلية 4: المقاس
+  html += '<div class="filter-cell">' +
+    '<span class="filter-label">المقاس</span>' +
+    '<div class="filter-chip' + (filtS ? ' active-filter' : '') + '">' +
+      '📐 <select onchange="filtS=this.value;applyFilters()">' +
+        '<option value="">الكل</option>' +
+        ['M','L','XL','XXL','3XL'].map(function(s){return '<option'+(s===filtS?' selected':'')+'>'+s+'</option>';}).join('') +
+      '</select>' +
+    '</div>' +
+  '</div>';
+
+  // خلية 5: اللون
+  html += '<div class="filter-cell">' +
+    '<span class="filter-label">اللون</span>' +
+    '<div class="filter-chip' + (filtC ? ' active-filter' : '') + '">' +
+      '🎨 <select onchange="filtC=this.value;applyFilters()">' +
+        '<option value="">الكل</option>' +
+        colors.map(function(c){return '<option value="'+c.name+'"'+(c.name===filtC?' selected':'')+'>'+c.name+'</option>';}).join('') +
+      '</select>' +
+    '</div>' +
+  '</div>';
+
+  // خلية 6: مسح الكل
+  html += '<div class="filter-cell">' +
+    '<span class="filter-label"> </span>' +
+    '<button class="filter-clear" onclick="filtW='';filtM='';filtS='';filtC='';filtDate='';applyFilters();renderAdminFilterBar()">✕ مسح الكل</button>' +
+  '</div>';
+
+  html += '</div>';
+  document.getElementById('adminFilterBar').innerHTML = html;
 }
+
 
 function renderAdminCards(fr) {
   var el=document.getElementById('adminCardsList'),em=document.getElementById('adminEmptyState');
