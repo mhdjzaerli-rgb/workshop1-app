@@ -65,3 +65,7 @@ self.addEventListener('notificationclick', function(e) {
     })
   );
 });
+navigator.serviceWorker.register('sw.js').then(reg => {
+    reg.update(); // يجبر المتصفح على تحديث الملفات فوراً
+    console.log('SW Registered');
+});
