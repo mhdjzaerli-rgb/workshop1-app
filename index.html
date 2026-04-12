@@ -122,8 +122,7 @@ html,body{height:100%;overflow:hidden;font-family:'Cairo',sans-serif;background:
 .sec-header{display:flex;align-items:center;justify-content:space-between;padding:.75rem 1rem .5rem;}
 .sec-title{font-family:'Amiri',serif;font-size:1rem;font-weight:700;color:var(--ink);}
 .sec-count{font-size:.7rem;color:var(--ink3);background:var(--bg2);padding:.15rem .5rem;border-radius:12px;}
-.filter-scroll{display:flex;gap:.5rem;padding:.5rem 1rem;overflow-x:auto;scrollbar-width:none;}
-.filter-scroll::-webkit-scrollbar{display:none;}
+.filter-scroll{display:flex;flex-direction:column;gap:.45rem;padding:.5rem 1rem;}
 .filter-chip{display:flex;align-items:center;gap:.35rem;padding:.38rem .8rem;background:var(--surface);border:1px solid var(--border2);border-radius:20px;font-family:'Cairo',sans-serif;font-size:.75rem;font-weight:600;color:var(--ink2);cursor:pointer;white-space:nowrap;flex-shrink:0;}
 .filter-chip.active-filter{background:var(--gold);color:white;border-color:var(--gold);}
 .filter-chip select{border:none;background:transparent;font-family:'Cairo',sans-serif;font-size:.75rem;font-weight:600;color:inherit;outline:none;cursor:pointer;}
@@ -277,10 +276,34 @@ html,body{height:100%;overflow:hidden;font-family:'Cairo',sans-serif;background:
 .toggle-slider::before{content:'';position:absolute;width:20px;height:20px;left:3px;top:3px;background:white;border-radius:50%;transition:.3s;}
 .toggle-switch input:checked+.toggle-slider{background:var(--teal);}
 .toggle-switch input:checked+.toggle-slider::before{transform:translateX(22px);}
+#pwa-banner{position:fixed;top:0;left:0;right:0;z-index:9999;background:linear-gradient(135deg,#2c1a0e,#4a2c14);border-bottom:2px solid var(--gold);padding:calc(.85rem + env(safe-area-inset-top,0px)) 1rem .85rem;display:none;animation:slideDown .4s ease;}
+@keyframes slideDown{from{transform:translateY(-100%);opacity:0}to{transform:translateY(0);opacity:1}}
+.pwa-inner{display:flex;align-items:center;gap:.75rem;}
+.pwa-icon{font-size:1.8rem;flex-shrink:0;}
+.pwa-text{flex:1;}
+.pwa-title{font-family:'Amiri',serif;font-size:.95rem;font-weight:700;color:#f5e6c0;margin-bottom:.1rem;}
+.pwa-sub{font-size:.7rem;color:var(--gold2);}
+.pwa-btns{display:flex;gap:.5rem;margin-top:.45rem;}
+.pwa-yes{padding:.4rem .85rem;background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;border-radius:8px;font-family:'Cairo',sans-serif;font-size:.76rem;font-weight:700;color:white;cursor:pointer;}
+.pwa-no{padding:.4rem .7rem;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:8px;font-family:'Cairo',sans-serif;font-size:.74rem;color:rgba(255,255,255,.6);cursor:pointer;}
+.filter-row-line{display:flex;gap:.45rem;align-items:center;}
 </style>
 </head>
 <body>
 
+<div id="pwa-banner">
+  <div class="pwa-inner">
+    <div class="pwa-icon">📱</div>
+    <div class="pwa-text">
+      <div class="pwa-title">ثبّت التطبيق على هاتفك!</div>
+      <div class="pwa-sub">يعمل بدون إنترنت ويُحفظ على الشاشة الرئيسية</div>
+      <div class="pwa-btns">
+        <button class="pwa-yes" id="pwaInstallBtn" onclick="pwaTriggerInstall()">📲 تثبيت</button>
+        <button class="pwa-no" onclick="pwaDismiss()">لاحقاً</button>
+      </div>
+    </div>
+  </div>
+</div>
 <div id="screen-loading">
   <div class="loading-icon">🧵</div>
   <div class="loading-text">ورشة الخياطة</div>
@@ -392,7 +415,7 @@ html,body{height:100%;overflow:hidden;font-family:'Cairo',sans-serif;background:
     <div class="at-actions">
       <span id="syncBadge" style="font-size:1rem">☁️</span>
       <button class="topbar-btn" onclick="exportXLSX()">📊</button>
-      <button class="topbar-btn" onclick="adminLogout()">🚪</button>
+      <button class="topbar-btn" onclick="adminLogout()" style="width:auto;padding:0 .6rem;font-size:.78rem;font-weight:700;display:flex;align-items:center;gap:.25rem;">🚪 خروج</button>
     </div>
   </div>
   <div class="admin-scroll" id="adminScroll" data-page="records">
@@ -567,7 +590,7 @@ function initApp() {
     } else {
       setScreen('home');
     }
-  }, 8000);
+  }, 15000);
 
   try {
     firebase.initializeApp(FIREBASE_CONFIG);
@@ -603,13 +626,13 @@ function initApp() {
           if(!snap.exists) return;
           var d=snap.data();
           workers=d.workers||[]; models=d.models||[]; colors=d.colors||[];
-          if(isAdmin) refreshAdmin(); else renderHome();
+          if(isAdmin || isUser) refreshAdmin(); else renderHome();
         });
         db.collection('records').onSnapshot(function(snap){
           records = snap.docs.map(function(d){ return Object.assign({id:d.id},d.data()); });
           records.sort(function(a,b){ return b.date.localeCompare(a.date); });
           syncBadge('ok');
-          if(isAdmin) refreshAdmin();
+          if(isAdmin || isUser) refreshAdmin();
           else if(currentWorker) renderWorkerRecents();
         });
         // ── استعادة الجلسة المحفوظة ──
@@ -900,17 +923,26 @@ function shiftDate(days) {
 }
 
 function renderAdminFilterBar() {
-  document.getElementById('adminFilterBar').innerHTML=
+  var row1=
+    '<div class="filter-row-line">'+
     '<div style="display:flex;align-items:center;gap:.25rem;flex-shrink:0">'+
-    '<button onclick="shiftDate(-1)" style="width:28px;height:28px;border:1px solid var(--border2);background:var(--bg2);border-radius:8px;font-size:.9rem;cursor:pointer;color:var(--ink2);display:flex;align-items:center;justify-content:center;padding:0;">›</button>'+
-    '<div class="filter-chip'+(filtDate?' active-filter':'')+'" style="flex-shrink:0">📅 <input type="date" value="'+filtDate+'" onchange="filtDate=this.value;applyFilters();renderAdminFilterBar()" style="border:none;background:transparent;font-family:Cairo,sans-serif;font-size:.72rem;color:inherit;outline:none;cursor:pointer;width:110px"></div>'+
-    '<button onclick="shiftDate(1)" style="width:28px;height:28px;border:1px solid var(--border2);background:var(--bg2);border-radius:8px;font-size:.9rem;cursor:pointer;color:var(--ink2);display:flex;align-items:center;justify-content:center;padding:0;">‹</button>'+
+    '<button onclick="shiftDate(-1)" style="width:28px;height:28px;border:1px solid var(--border2);background:var(--bg2);border-radius:8px;font-size:.9rem;cursor:pointer;color:var(--ink2);display:flex;align-items:center;justify-content:center;padding:0;">\u203a</button>'+
+    '<div class="filter-chip'+(filtDate?' active-filter':'')+'" style="flex-shrink:0">\ud83d\udcc5 <input type="date" value="'+filtDate+'" onchange="filtDate=this.value;applyFilters();renderAdminFilterBar()" style="border:none;background:transparent;font-family:Cairo,sans-serif;font-size:.72rem;color:inherit;outline:none;cursor:pointer;width:100px"></div>'+
+    '<button onclick="shiftDate(1)" style="width:28px;height:28px;border:1px solid var(--border2);background:var(--bg2);border-radius:8px;font-size:.9rem;cursor:pointer;color:var(--ink2);display:flex;align-items:center;justify-content:center;padding:0;">\u2039</button>'+
     '</div>'+
-    '<div class="filter-chip'+(filtW?' active-filter':'')+'">👩 <select onchange="filtW=this.value;applyFilters()" style="max-width:70px"><option value="">الكل</option>'+workers.map(function(w){return '<option'+(w===filtW?' selected':'')+'>'+w+'</option>';}).join('')+'</select></div>'+
-    '<div class="filter-chip'+(filtM?' active-filter':'')+'">👗 <select onchange="filtM=this.value;applyFilters()" style="max-width:65px"><option value="">الكل</option>'+models.map(function(m){return '<option'+(m===filtM?' selected':'')+'>'+m+'</option>';}).join('')+'</select></div>'+
-    '<div class="filter-chip'+(filtS?' active-filter':'')+'">📐 <select onchange="filtS=this.value;applyFilters()" style="max-width:55px"><option value="">الكل</option>'+['M','L','XL','XXL','3XL'].map(function(s){return '<option'+(s===filtS?' selected':'')+'>'+s+'</option>';}).join('')+'</select></div>'+
-    '<div class="filter-chip'+(filtC?' active-filter':'')+'">🎨 <select onchange="filtC=this.value;applyFilters()" style="max-width:65px"><option value="">الكل</option>'+colors.map(function(c){return '<option value="'+c.name+'"'+(c.name===filtC?' selected':'')+'>'+c.name+'</option>';}).join('')+'</select></div>'+
-    '<div class="filter-chip" onclick="filtW=\'\';filtM=\'\';filtS=\'\';filtC=\'\';filtDate=\'\';applyFilters();renderAdminFilterBar()">✕ مسح</div>';
+    '<div class="filter-chip'+(filtW?' active-filter':'')+'" style="flex:1">\ud83d\udc69 <select onchange="filtW=this.value;applyFilters()" style="max-width:90px;width:100%"><option value="">\u0627\u0644\u0643\u0644</option>'+workers.map(function(w){return '<option'+(w===filtW?' selected':'')+'>'+w+'</option>';}).join('')+'</select></div>'+
+    '</div>';
+  var row2=
+    '<div class="filter-row-line">'+
+    '<div class="filter-chip'+(filtM?' active-filter':'')+'" style="flex:1">\ud83d\udc57 <select onchange="filtM=this.value;applyFilters()" style="width:100%;max-width:140px"><option value="">\u0627\u0644\u0643\u0644</option>'+models.map(function(m){return '<option'+(m===filtM?' selected':'')+'>'+m+'</option>';}).join('')+'</select></div>'+
+    '<div class="filter-chip'+(filtS?' active-filter':'')+'" style="flex:1">\ud83d\udcd0 <select onchange="filtS=this.value;applyFilters()" style="width:100%;max-width:100px"><option value="">\u0627\u0644\u0643\u0644</option>'+['M','L','XL','XXL','3XL'].map(function(s){return '<option'+(s===filtS?' selected':'')+'>'+s+'</option>';}).join('')+'</select></div>'+
+    '</div>';
+  var row3=
+    '<div class="filter-row-line">'+
+    '<div class="filter-chip'+(filtC?' active-filter':'')+'" style="flex:1">\ud83c\udfa8 <select onchange="filtC=this.value;applyFilters()" style="width:100%;max-width:140px"><option value="">\u0627\u0644\u0643\u0644</option>'+colors.map(function(c){return '<option value="'+c.name+'"'+(c.name===filtC?' selected':'')+'>'+c.name+'</option>';}).join('')+'</select></div>'+
+    '<div class="filter-chip" style="flex-shrink:0;white-space:nowrap" onclick="filtW=\'\';filtM=\'\';filtS=\'\';filtC=\'\';filtDate=\'\';applyFilters();renderAdminFilterBar()">\u2715 \u0645\u0633\u062d</div>'+
+    '</div>';
+  document.getElementById('adminFilterBar').innerHTML=row1+row2+row3;
 }
 
 function renderAdminCards(fr) {
@@ -1214,8 +1246,17 @@ function renderSettings(){
     '</div></div>'
   : '';
 
+  var installSection = (isAdmin || isUser) ?
+    '<div class="settings-section"><div class="settings-section-title">📲 تثبيت التطبيق</div>'+
+    '<div style="padding:.85rem 1rem;display:flex;flex-direction:column;gap:.65rem">'+
+    '<div style="font-size:.8rem;color:var(--ink2);line-height:1.6">ثبّت التطبيق على شاشتك الرئيسية ليعمل بشكل أسرع ويعمل بدون إنترنت.</div>'+
+    '<button onclick="pwaInstallFromSettings()" style="width:100%;padding:.75rem;background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;border-radius:11px;font-family:Cairo,sans-serif;font-size:.88rem;font-weight:700;color:white;cursor:pointer;">📲 تثبيت على الشاشة الرئيسية</button>'+
+    '<div style="font-size:.7rem;color:var(--ink3);text-align:center">على iOS: اضغط زر المشاركة ← إضافة إلى الشاشة الرئيسية</div>'+
+    '</div></div>'
+  : '';
+
   document.getElementById('settingsPage').innerHTML =
-    workersSection + modelsSection + colorsSection + exportSection + passwordSection + notifSection;
+    workersSection + modelsSection + colorsSection + exportSection + passwordSection + notifSection + installSection;
 }
 
 function changeAdminPw() {
@@ -1484,6 +1525,57 @@ function scheduleDailyNotif() {
 
 function clearDailyNotif() {
   if(_notifTimer) { clearTimeout(_notifTimer); clearInterval(_notifTimer); _notifTimer = null; }
+}
+
+// ══════════════════════════════════════════════════════
+//  📲 PWA Install
+// ══════════════════════════════════════════════════════
+var _pwaPrompt = null;
+
+window.addEventListener('beforeinstallprompt', function(e) {
+  e.preventDefault();
+  _pwaPrompt = e;
+  // أظهر البانر إذا لم يُرفض سابقاً
+  if(localStorage.getItem('pwa_dismissed') !== '1') {
+    var banner = document.getElementById('pwa-banner');
+    if(banner) banner.style.display = 'block';
+  }
+});
+
+window.addEventListener('appinstalled', function() {
+  var banner = document.getElementById('pwa-banner');
+  if(banner) banner.style.display = 'none';
+  _pwaPrompt = null;
+  localStorage.setItem('pwa_dismissed','1');
+  toast('تم التثبيت بنجاح! 🎉','success');
+});
+
+function pwaTriggerInstall() {
+  if(_pwaPrompt) {
+    _pwaPrompt.prompt();
+    _pwaPrompt.userChoice.then(function(r){
+      if(r.outcome === 'accepted') {
+        document.getElementById('pwa-banner').style.display = 'none';
+        localStorage.setItem('pwa_dismissed','1');
+      }
+      _pwaPrompt = null;
+    });
+  } else {
+    toast('استخدم قائمة المتصفح لإضافة التطبيق','info');
+  }
+}
+
+function pwaInstallFromSettings() {
+  if(_pwaPrompt) {
+    pwaTriggerInstall();
+  } else {
+    toast('على iOS: المشاركة ← إضافة للشاشة الرئيسية','info');
+  }
+}
+
+function pwaDismiss() {
+  document.getElementById('pwa-banner').style.display = 'none';
+  localStorage.setItem('pwa_dismissed','1');
 }
 
 // ── Start ─────────────────────────────────────────────
