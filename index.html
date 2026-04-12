@@ -267,6 +267,16 @@ html,body{height:100%;overflow:hidden;font-family:'Cairo',sans-serif;background:
 .toast.success{background:var(--teal);}
 .toast.error{background:var(--rose);}
 .toast.info{background:var(--gold);}
+.notif-toggle{display:flex;align-items:center;justify-content:space-between;padding:.75rem 1rem;background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:.5rem;}
+.notif-toggle-label{display:flex;flex-direction:column;gap:.15rem;}
+.notif-toggle-title{font-size:.88rem;font-weight:700;color:var(--ink);}
+.notif-toggle-sub{font-size:.68rem;color:var(--ink3);}
+.toggle-switch{position:relative;width:48px;height:26px;flex-shrink:0;}
+.toggle-switch input{opacity:0;width:0;height:0;}
+.toggle-slider{position:absolute;inset:0;background:var(--border2);border-radius:13px;cursor:pointer;transition:.3s;}
+.toggle-slider::before{content:'';position:absolute;width:20px;height:20px;left:3px;top:3px;background:white;border-radius:50%;transition:.3s;}
+.toggle-switch input:checked+.toggle-slider{background:var(--teal);}
+.toggle-switch input:checked+.toggle-slider::before{transform:translateX(22px);}
 </style>
 </head>
 <body>
@@ -1185,8 +1195,27 @@ function renderSettings(){
     '</div></div>'
   : '';
 
+  // ── قسم الإشعارات ──
+  var notifEnabled = localStorage.getItem('daily_notif') === '1';
+  var notifSection = (isAdmin || isUser) ?
+    '<div class="settings-section"><div class="settings-section-title">🔔 الإشعارات</div>'+
+    '<div style="padding:.85rem 1rem">'+
+    '<div class="notif-toggle">'+
+      '<div class="notif-toggle-label">'+
+        '<div class="notif-toggle-title">📊 تقرير يومي الساعة 10 مساءً</div>'+
+        '<div class="notif-toggle-sub">إشعار بملخص إنتاج اليوم كل يوم</div>'+
+      '</div>'+
+      '<label class="toggle-switch">'+
+        '<input type="checkbox" id="notifToggle" '+(notifEnabled?'checked':'')+' onchange="toggleDailyNotif(this.checked)">'+
+        '<span class="toggle-slider"></span>'+
+      '</label>'+
+    '</div>'+
+    '<button onclick="sendTestNotif()" style="width:100%;margin-top:.5rem;padding:.6rem;background:var(--gold-light);border:1px solid rgba(184,137,42,.4);border-radius:9px;font-family:Cairo,sans-serif;font-size:.82rem;font-weight:700;color:var(--gold);cursor:pointer">🔔 إرسال إشعار تجريبي الآن</button>'+
+    '</div></div>'
+  : '';
+
   document.getElementById('settingsPage').innerHTML =
-    workersSection + modelsSection + colorsSection + exportSection + passwordSection;
+    workersSection + modelsSection + colorsSection + exportSection + passwordSection + notifSection;
 }
 
 function changeAdminPw() {
@@ -1355,8 +1384,118 @@ function exportMonthly(){
   toast('تم التصدير 📊','success');
 }
 
+// ══════════════════════════════════════════════════════
+//  🔔 الإشعارات اليومية
+// ══════════════════════════════════════════════════════
+
+function buildDailyReport() {
+  var today = new Date().toISOString().split('T')[0];
+  var todayRecs = records.filter(function(r){ return r.date === today; });
+  var total = todayRecs.reduce(function(s,r){ return s + r.qty; }, 0);
+  if(!total) return { title: '📊 ورشة الخياطة', body: 'لا يوجد إنتاج مسجّل اليوم' };
+
+  var wm = {};
+  todayRecs.forEach(function(r){ wm[r.worker] = (wm[r.worker]||0) + r.qty; });
+  var lines = Object.entries(wm).sort(function(a,b){return b[1]-a[1];}).map(function(e){
+    return e[0] + ': ' + e[1];
+  });
+  return {
+    title: '📊 تقرير اليوم — ' + total + ' جبة',
+    body: lines.join(' | ')
+  };
+}
+
+function sendDailyNotif() {
+  if(Notification.permission !== 'granted') return;
+  var rpt = buildDailyReport();
+  try {
+    navigator.serviceWorker.ready.then(function(reg) {
+      reg.showNotification(rpt.title, {
+        body: rpt.body,
+        icon: 'icon-192.png',
+        badge: 'icon-192.png',
+        dir: 'rtl',
+        lang: 'ar',
+        tag: 'daily-report',
+        renotify: true
+      });
+    });
+  } catch(e) {
+    new Notification(rpt.title, { body: rpt.body, dir: 'rtl' });
+  }
+}
+
+function sendTestNotif() {
+  if(Notification.permission === 'denied') {
+    toast('الإشعارات محظورة من إعدادات المتصفح','error'); return;
+  }
+  Notification.requestPermission().then(function(p){
+    if(p === 'granted') {
+      sendDailyNotif();
+      toast('تم إرسال إشعار تجريبي ✓','success');
+    } else {
+      toast('لم يُمنح إذن الإشعارات','error');
+    }
+  });
+}
+
+function toggleDailyNotif(enabled) {
+  if(enabled) {
+    Notification.requestPermission().then(function(p){
+      if(p === 'granted') {
+        localStorage.setItem('daily_notif', '1');
+        scheduleDailyNotif();
+        toast('✅ سيصلك تقرير كل يوم الساعة 10 مساءً','success');
+      } else {
+        localStorage.setItem('daily_notif', '0');
+        var el = document.getElementById('notifToggle');
+        if(el) el.checked = false;
+        toast('يجب السماح بالإشعارات من المتصفح','error');
+      }
+    });
+  } else {
+    localStorage.setItem('daily_notif', '0');
+    clearDailyNotif();
+    toast('تم إيقاف الإشعار اليومي','info');
+  }
+}
+
+var _notifTimer = null;
+
+function scheduleDailyNotif() {
+  clearDailyNotif();
+  if(localStorage.getItem('daily_notif') !== '1') return;
+  if(Notification.permission !== 'granted') return;
+
+  var now  = new Date();
+  var next = new Date();
+  next.setHours(22, 0, 0, 0); // 10 مساءً
+  if(next <= now) next.setDate(next.getDate() + 1); // إذا فات وقتها، غداً
+  var ms = next - now;
+
+  _notifTimer = setTimeout(function(){
+    sendDailyNotif();
+    // جدوِل للغد
+    _notifTimer = setInterval(function(){
+      sendDailyNotif();
+    }, 24 * 60 * 60 * 1000);
+  }, ms);
+}
+
+function clearDailyNotif() {
+  if(_notifTimer) { clearTimeout(_notifTimer); clearInterval(_notifTimer); _notifTimer = null; }
+}
+
 // ── Start ─────────────────────────────────────────────
-window.onload = function(){ initApp(); };
+window.onload = function(){
+  initApp();
+  // تشغيل الجدولة إذا كانت مفعّلة
+  if(localStorage.getItem('daily_notif') === '1') {
+    Notification.requestPermission().then(function(p){
+      if(p === 'granted') scheduleDailyNotif();
+    });
+  }
+};
 </script>
   <script>
 if ("serviceWorker" in navigator) {
