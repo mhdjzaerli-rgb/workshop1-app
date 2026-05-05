@@ -528,6 +528,7 @@ var MC=['#b8892a','#1a6b5c','#8b2a3a','#1a4a8b','#5a2a8b','#2c7a5c','#7a5c2c','#
 var workers=[], models=[], colors=[], records=[];
 var isAdmin=false, isUser=false, currentWorker=null;
 var editingId=null, deletingId=null, selColor='', wSelColor='';
+var lastUsed={worker:'', model:'', size:'XL'};
 var filtW='',filtM='',filtC='',filtS='',filtDate=new Date().toISOString().split('T')[0];
 var rYear=new Date().getFullYear(), rMonth=new Date().getMonth();
 var curQty=1, wCurQty=1;
@@ -996,6 +997,9 @@ function openAddRecord(){
   document.getElementById('r_note').value='';
   document.getElementById('r_worker').innerHTML=workers.map(function(w){return '<option>'+w+'</option>';}).join('');
   document.getElementById('r_model').innerHTML=models.map(function(m){return '<option>'+m+'</option>';}).join('');
+  if(lastUsed.worker) document.getElementById('r_worker').value=lastUsed.worker;
+  if(lastUsed.model)  document.getElementById('r_model').value=lastUsed.model;
+  if(lastUsed.size)   document.getElementById('r_size').value=lastUsed.size;
   buildColorPicker();
   document.getElementById('recordOverlay').classList.add('show');
 }
@@ -1024,6 +1028,7 @@ function saveRecord(){
     d=document.getElementById('r_date').value,n=document.getElementById('r_note').value.trim(),
     c=document.getElementById('r_color').value||selColor;
   if(!w||!m||!s||q<1||!d||!c){toast('يرجى تعبئة جميع الحقول واختيار لون','error');return;}
+  if(!editingId){lastUsed={worker:w, model:m, size:s};}
   if(!db){
     if(editingId){var i=records.findIndex(function(r){return r.id===editingId;});if(i>-1)records[i]={id:editingId,worker:w,model:m,size:s,color:c,qty:q,date:d,note:n};}
     else records.unshift({id:'L'+Date.now(),worker:w,model:m,size:s,color:c,qty:q,date:d,note:n});
