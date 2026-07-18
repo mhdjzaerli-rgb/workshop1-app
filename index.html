@@ -528,7 +528,7 @@ var MC=['#b8892a','#1a6b5c','#8b2a3a','#1a4a8b','#5a2a8b','#2c7a5c','#7a5c2c','#
 var workers=[], models=[], colors=[], records=[];
 var isAdmin=false, isUser=false, currentWorker=null;
 var editingId=null, deletingId=null, selColor='', wSelColor='';
-var lastUsed={worker:'', model:'', size:'XL'};
+var lastUsed=(function(){try{var v=localStorage.getItem('ws_lastUsed');return v?JSON.parse(v):{worker:'',model:'',size:'XL'};}catch(e){return {worker:'',model:'',size:'XL'};}})();
 var filtW='',filtM='',filtC='',filtS='',filtDate=new Date().toISOString().split('T')[0];
 var rYear=new Date().getFullYear(), rMonth=new Date().getMonth();
 var curQty=1, wCurQty=1;
@@ -1028,7 +1028,7 @@ function saveRecord(){
     d=document.getElementById('r_date').value,n=document.getElementById('r_note').value.trim(),
     c=document.getElementById('r_color').value||selColor;
   if(!w||!m||!s||q<1||!d||!c){toast('يرجى تعبئة جميع الحقول واختيار لون','error');return;}
-  if(!editingId){lastUsed={worker:w, model:m, size:s};}
+  if(!editingId){lastUsed={worker:w,model:m,size:s};try{localStorage.setItem('ws_lastUsed',JSON.stringify(lastUsed));}catch(e){}}
   if(!db){
     if(editingId){var i=records.findIndex(function(r){return r.id===editingId;});if(i>-1)records[i]={id:editingId,worker:w,model:m,size:s,color:c,qty:q,date:d,note:n};}
     else records.unshift({id:'L'+Date.now(),worker:w,model:m,size:s,color:c,qty:q,date:d,note:n});
