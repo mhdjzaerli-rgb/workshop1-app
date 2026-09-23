@@ -682,9 +682,10 @@ function initApp() {
           if(isAdmin || isUser) refreshAdmin();
           else if(currentWorker) renderWorkerRecents();
         });
-        db.collection('cut_records').orderBy('createdAt','desc').onSnapshot(function(snap){
+        db.collection('cut_records').onSnapshot(function(snap){
           cutRecords=[];
           snap.forEach(function(d){cutRecords.push(Object.assign({id:d.id},d.data()));});
+          cutRecords.sort(function(a,b){return (b.createdAt&&b.createdAt.seconds||0)-(a.createdAt&&a.createdAt.seconds||0);});
           if(document.getElementById('adminScroll').dataset.page==='cutting') renderCutPage();
         }, function(err){console.log('cut_records error:',err);});
         // ── استعادة الجلسة المحفوظة ──
