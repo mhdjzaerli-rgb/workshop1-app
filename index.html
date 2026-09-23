@@ -287,6 +287,44 @@ html,body{height:100%;overflow:hidden;font-family:'Cairo',sans-serif;background:
 .pwa-yes{padding:.4rem .85rem;background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;border-radius:8px;font-family:'Cairo',sans-serif;font-size:.76rem;font-weight:700;color:white;cursor:pointer;}
 .pwa-no{padding:.4rem .7rem;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:8px;font-family:'Cairo',sans-serif;font-size:.74rem;color:rgba(255,255,255,.6);cursor:pointer;}
 .filter-row-line{display:flex;gap:.45rem;align-items:center;}
+
+/* ====== CUTTING (القص) PAGE ====== */
+.cut-stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:.55rem;margin:.85rem .85rem .5rem;}
+.cut-stat-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:.7rem .5rem;text-align:center;}
+.cut-stat-val{font-size:1.35rem;font-weight:900;color:var(--teal);font-family:'Amiri',serif;}
+.cut-stat-lbl{font-size:.62rem;color:var(--ink3);font-weight:600;margin-top:.15rem;}
+.cut-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;margin:.55rem .85rem;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.04);}
+.cut-card-head{background:linear-gradient(135deg,var(--teal),var(--teal2));padding:.75rem 1rem;display:flex;align-items:center;justify-content:space-between;}
+.cut-card-name{font-family:'Amiri',serif;font-size:1.05rem;font-weight:700;color:#fff;}
+.cut-card-sizes{font-size:.68rem;color:rgba(255,255,255,.8);background:rgba(0,0,0,.18);border-radius:20px;padding:.15rem .55rem;}
+.cut-card-body{padding:.75rem 1rem;}
+.cut-card-row{display:flex;justify-content:space-between;align-items:center;padding:.3rem 0;border-bottom:1px solid var(--border);}
+.cut-card-row:last-child{border-bottom:none;}
+.cut-card-lbl{font-size:.72rem;color:var(--ink3);font-weight:600;}
+.cut-card-val{font-size:.82rem;font-weight:700;color:var(--ink);}
+.cut-card-val.teal{color:var(--teal);}
+.cut-card-actions{display:flex;gap:.5rem;padding:.6rem 1rem;background:var(--surface2);border-top:1px solid var(--border);}
+.cut-act-btn{flex:1;height:34px;border-radius:9px;border:1px solid var(--border2);background:transparent;font-family:'Cairo',sans-serif;font-size:.73rem;font-weight:700;cursor:pointer;color:var(--ink2);}
+.cut-act-btn.danger{color:var(--rose);border-color:var(--rose);}
+.cut-sheet-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;display:flex;flex-direction:column;justify-content:flex-end;opacity:0;pointer-events:none;transition:opacity .25s;}
+.cut-sheet-overlay.show{opacity:1;pointer-events:all;}
+.cut-sheet{background:var(--bg);border-radius:22px 22px 0 0;padding:1.2rem 1rem calc(1.4rem + var(--safe-b));max-height:92vh;overflow-y:auto;}
+.cut-sheet-title{font-family:'Amiri',serif;font-size:1.15rem;font-weight:700;text-align:center;margin-bottom:1rem;color:var(--ink);}
+.cut-field{margin-bottom:.8rem;}
+.cut-field label{display:block;font-size:.73rem;font-weight:700;color:var(--ink2);margin-bottom:.3rem;}
+.cut-field input,.cut-field select{width:100%;height:42px;border:1.5px solid var(--border);border-radius:10px;padding:0 .85rem;font-family:'Cairo',sans-serif;font-size:.85rem;background:var(--surface);color:var(--ink);outline:none;}
+.cut-field input:focus{border-color:var(--teal);}
+.cut-auto-field{background:var(--teal-light);border:1.5px solid var(--teal);border-radius:10px;padding:.65rem .85rem;display:flex;justify-content:space-between;align-items:center;margin-bottom:.8rem;}
+.cut-auto-lbl{font-size:.72rem;color:var(--teal);font-weight:700;}
+.cut-auto-val{font-size:1.1rem;font-weight:900;color:var(--teal);font-family:'Amiri',serif;}
+.cut-sizes-grid{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.3rem;}
+.cut-size-chip{padding:.25rem .65rem;border-radius:20px;border:1.5px solid var(--border2);background:transparent;font-family:'Cairo',sans-serif;font-size:.75rem;cursor:pointer;color:var(--ink2);font-weight:600;transition:.15s;}
+.cut-size-chip.on{background:var(--teal);border-color:var(--teal);color:#fff;}
+.cut-save-btn{width:100%;height:46px;background:linear-gradient(135deg,var(--teal),var(--teal2));border:none;border-radius:13px;font-family:'Cairo',sans-serif;font-size:.95rem;font-weight:700;color:#fff;cursor:pointer;margin-top:.4rem;}
+.cut-fab{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--nav-h) + var(--safe-b) + .8rem);z-index:40;width:56px;height:56px;background:linear-gradient(135deg,var(--teal),var(--teal2));border:none;border-radius:50%;font-size:1.6rem;color:white;box-shadow:0 4px 20px rgba(26,107,92,.45);cursor:pointer;display:none;align-items:center;justify-content:center;}
+.cut-empty{text-align:center;padding:3rem 1rem;color:var(--ink3);}
+.cut-empty-icon{font-size:3rem;margin-bottom:.75rem;}
+
 </style>
 </head>
 <body>
@@ -434,16 +472,24 @@ html,body{height:100%;overflow:hidden;font-family:'Cairo',sans-serif;background:
       <div class="summary-page" id="summaryPage"></div>
     </div>
     <div class="apage" id="apage-report"><div class="report-page" id="reportPage"></div></div>
+    <div class="apage" id="apage-cutting">
+      <div id="cutStats"></div>
+      <div class="sec-header" style="padding-top:.85rem"><div class="sec-title">✂️ مجموعة القص</div><span class="sec-count" id="cutCount">0</span></div>
+      <div id="cutList"></div>
+      <div class="cut-empty" id="cutEmpty" style="display:none"><div class="cut-empty-icon">✂️</div><p>لا توجد مطلات</p></div>
+    </div>
     <div class="apage" id="apage-settings">
       <div class="sec-header" style="padding-top:.85rem"><div class="sec-title">⚙️ الإعدادات</div></div>
       <div class="settings-page" id="settingsPage"></div>
     </div>
   </div>
   <button class="fab" id="afab" onclick="openAddRecord()">+</button>
+  <button class="cut-fab" id="cutFab" onclick="openCutSheet(null)">+</button>
   <nav class="bottom-nav">
     <button class="anav-btn active" id="anav-records" onclick="showAdminPage('records')"><span class="nav-icon">🪡</span>السجلات</button>
     <button class="anav-btn" id="anav-summary" onclick="showAdminPage('summary')"><span class="nav-icon">📋</span>الملخص</button>
     <button class="anav-btn" id="anav-report" onclick="showAdminPage('report')"><span class="nav-icon">📅</span>التقرير</button>
+    <button class="anav-btn" id="anav-cutting" onclick="showAdminPage('cutting')"><span class="nav-icon">✂️</span>القص</button>
     <button class="anav-btn" id="anav-settings" onclick="showAdminPage('settings')"><span class="nav-icon">⚙️</span>الإعدادات</button>
   </nav>
 </div>
@@ -636,6 +682,11 @@ function initApp() {
           if(isAdmin || isUser) refreshAdmin();
           else if(currentWorker) renderWorkerRecents();
         });
+        db.collection('cut_records').orderBy('createdAt','desc').onSnapshot(function(snap){
+          cutRecords=[];
+          snap.forEach(function(d){cutRecords.push(Object.assign({id:d.id},d.data()));});
+          if(document.getElementById('adminScroll').dataset.page==='cutting') renderCutPage();
+        }, function(err){console.log('cut_records error:',err);});
         // ── استعادة الجلسة المحفوظة ──
         var savedSession = localStorage.getItem('ws_session');
         var savedWorker  = localStorage.getItem('ws_worker');
@@ -879,11 +930,13 @@ function showAdminPage(n) {
   document.getElementById('apage-'+n).classList.add('active');
   document.getElementById('anav-'+n).classList.add('active');
   document.getElementById('afab').style.display=(n==='records'&&isAdmin)?'flex':'none';
+  document.getElementById('cutFab').style.display=(n==='cutting'&&(isAdmin||isUser))?'flex':'none';
   document.getElementById('adminScroll').dataset.page=n;
   document.getElementById('adminScroll').scrollTop=0;
   if(n==='summary') renderSummary();
   if(n==='report')  renderReport();
   if(n==='settings') renderSettings();
+  if(n==='cutting') renderCutPage();
 }
 
 function refreshAdmin() {
@@ -893,6 +946,7 @@ function refreshAdmin() {
   if(cur==='summary') renderSummary();
   if(cur==='report')  renderReport();
   if(cur==='settings') renderSettings();
+  if(cur==='cutting') renderCutPage();
 }
 
 function applyFilters() {
@@ -1583,6 +1637,140 @@ function pwaDismiss() {
   localStorage.setItem('pwa_dismissed','1');
 }
 
+// ===== CUTTING MODULE =====
+var cutRecords=[], editingCutId=null, ctSelSizes=[];
+var ALL_SIZES=['XS','S','M','L','XL','XXL','3XL'];
+
+// cut_records listener added inside initApp
+
+function renderCutPage(){
+  var list=document.getElementById('cutList');
+  var empty=document.getElementById('cutEmpty');
+  var countEl=document.getElementById('cutCount');
+  var statsEl=document.getElementById('cutStats');
+  countEl.textContent=cutRecords.length;
+  if(!cutRecords.length){
+    list.innerHTML='';
+    empty.style.display='block';
+    statsEl.innerHTML='';
+    return;
+  }
+  empty.style.display='none';
+  var totFabric=0, totQty=0;
+  cutRecords.forEach(function(r){totFabric+=Number(r.fabric||0);totQty+=Number(r.qty||0);});
+  statsEl.innerHTML='<div class="cut-stats-row">'+
+    '<div class="cut-stat-card"><div class="cut-stat-val">'+cutRecords.length+'</div><div class="cut-stat-lbl">مطلة</div></div>'+
+    '<div class="cut-stat-card"><div class="cut-stat-val">'+totQty+'</div><div class="cut-stat-lbl">جبة إجمالي</div></div>'+
+    '<div class="cut-stat-card"><div class="cut-stat-val">'+totFabric.toFixed(1)+'</div><div class="cut-stat-lbl">م إجمالي</div></div>'+
+  '</div>';
+  list.innerHTML=cutRecords.map(function(r){
+    var pp=(r.fabric>0&&r.qty>0)?(r.fabric/r.qty).toFixed(2)+'م':'—';
+    var canEdit=isAdmin||isUser;
+    return '<div class="cut-card">'+
+      '<div class="cut-card-head">'+
+        '<span class="cut-card-name">'+r.model+'</span>'+
+        '<span class="cut-card-sizes">'+(r.sizes||[]).join(' · ')+'</span>'+
+      '</div>'+
+      '<div class="cut-card-body">'+
+        '<div class="cut-card-row"><span class="cut-card-lbl">📅 التاريخ</span><span class="cut-card-val">'+(r.date||'')+'</span></div>'+
+        '<div class="cut-card-row"><span class="cut-card-lbl">📏 المتراج</span><span class="cut-card-val teal">'+r.fabric+' م</span></div>'+
+        '<div class="cut-card-row"><span class="cut-card-lbl">👗 العدد</span><span class="cut-card-val">'+r.qty+' جبة</span></div>'+
+        '<div class="cut-card-row"><span class="cut-card-lbl">⚡ متراج الجبة</span><span class="cut-card-val teal">'+pp+'</span></div>'+
+        (r.note?'<div class="cut-card-row"><span class="cut-card-lbl">📝 ملاحظة</span><span class="cut-card-val">'+r.note+'</span></div>':'')+
+      '</div>'+
+      (canEdit?'<div class="cut-card-actions">'+
+        '<button class="cut-act-btn" onclick="openCutSheet(''+r.id+'')">✏️ تعديل</button>'+
+        (isAdmin?'<button class="cut-act-btn danger" onclick="deleteCutRecord(''+r.id+'')">🗑️ حذف</button>':'')+
+      '</div>':'')+
+    '</div>';
+  }).join('');
+}
+
+function buildSizesGrid(){
+  document.getElementById('ct_sizes_grid').innerHTML=ALL_SIZES.map(function(s){
+    var on=ctSelSizes.indexOf(s)>-1;
+    return '<button type="button" class="cut-size-chip'+(on?' on':'')+'" onclick="toggleCutSize(''+s+'')">'+s+'</button>';
+  }).join('');
+}
+
+function toggleCutSize(s){
+  var i=ctSelSizes.indexOf(s);
+  if(i>-1) ctSelSizes.splice(i,1); else ctSelSizes.push(s);
+  buildSizesGrid();
+}
+
+function calcCutPerPiece(){
+  var f=parseFloat(document.getElementById('ct_fabric').value)||0;
+  var q=parseInt(document.getElementById('ct_qty').value)||0;
+  document.getElementById('ct_per_piece').textContent=(f>0&&q>0)?(f/q).toFixed(2)+' م':'—';
+}
+
+function openCutSheet(id){
+  editingCutId=id;
+  document.getElementById('ct_date').value=TODAY;
+  if(id){
+    var r=cutRecords.find(function(x){return x.id===id;});
+    if(!r) return;
+    document.getElementById('cutSheetTitle').textContent='✏️ تعديل مطلة';
+    document.getElementById('ct_model').value=r.model||'';
+    document.getElementById('ct_fabric').value=r.fabric||'';
+    document.getElementById('ct_qty').value=r.qty||'';
+    document.getElementById('ct_note').value=r.note||'';
+    document.getElementById('ct_date').value=r.date||TODAY;
+    ctSelSizes=r.sizes?r.sizes.slice():[];
+  } else {
+    document.getElementById('cutSheetTitle').textContent='✂️ إضافة مطلة';
+    document.getElementById('ct_model').value='';
+    document.getElementById('ct_fabric').value='';
+    document.getElementById('ct_qty').value='';
+    document.getElementById('ct_note').value='';
+    ctSelSizes=[];
+  }
+  buildSizesGrid();
+  calcCutPerPiece();
+  document.getElementById('cutOverlay').classList.add('show');
+}
+
+function closeCutSheet(){
+  document.getElementById('cutOverlay').classList.remove('show');
+}
+
+function saveCutRecord(){
+  var model=document.getElementById('ct_model').value.trim();
+  var fabric=parseFloat(document.getElementById('ct_fabric').value)||0;
+  var qty=parseInt(document.getElementById('ct_qty').value)||0;
+  var note=document.getElementById('ct_note').value.trim();
+  var date=document.getElementById('ct_date').value||TODAY;
+  if(!model){toast('أدخل اسم الموديل','error');return;}
+  if(!ctSelSizes.length){toast('اختر مقاساً واحداً على الأقل','error');return;}
+  if(fabric<=0){toast('أدخل المتراج','error');return;}
+  if(qty<=0){toast('أدخل العدد','error');return;}
+  var data={
+    model:model, fabric:fabric, qty:qty, sizes:ctSelSizes,
+    perPiece:parseFloat((fabric/qty).toFixed(3)),
+    note:note, date:date,
+    savedBy:currentWorker||'admin'
+  };
+  if(editingCutId){
+    db.collection('cut_records').doc(editingCutId).update(data)
+      .then(function(){toast('تم التعديل ✅');closeCutSheet();})
+      .catch(function(e){toast('خطأ: '+e.message,'error');});
+  } else {
+    data.createdAt=firebase.firestore.FieldValue.serverTimestamp();
+    db.collection('cut_records').add(data)
+      .then(function(){toast('تمت الإضافة ✅');closeCutSheet();})
+      .catch(function(e){toast('خطأ: '+e.message,'error');});
+  }
+}
+
+function deleteCutRecord(id){
+  if(!confirm('حذف هذه المطلة؟')) return;
+  db.collection('cut_records').doc(id).delete()
+    .then(function(){toast('تم الحذف');})
+    .catch(function(e){toast('خطأ: '+e.message,'error');});
+}
+
+
 // ── Start ─────────────────────────────────────────────
 window.onload = function(){
   initApp();
@@ -1600,6 +1788,46 @@ if ("serviceWorker" in navigator) {
     .then(() => console.log("Service Worker Registered"))
     .catch(err => console.error("SW Error", err));
 }
+
+
 </script>
+
+<!-- CUT SHEET OVERLAY -->
+<div class="cut-sheet-overlay" id="cutOverlay">
+  <div class="cut-sheet">
+    <div class="cut-sheet-title" id="cutSheetTitle">✂️ إضافة مطلة</div>
+    <div class="cut-field">
+      <label>اسم الموديل</label>
+      <input type="text" id="ct_model" placeholder="مثال: ماطلة صيفي خط معينات">
+    </div>
+    <div class="cut-field">
+      <label>المقاسات</label>
+      <div class="cut-sizes-grid" id="ct_sizes_grid"></div>
+    </div>
+    <div class="cut-field">
+      <label>المتراج الكلي (متر)</label>
+      <input type="number" id="ct_fabric" placeholder="0" step="0.01" oninput="calcCutPerPiece()">
+    </div>
+    <div class="cut-field">
+      <label>العدد الإجمالي (جبة)</label>
+      <input type="number" id="ct_qty" placeholder="0" oninput="calcCutPerPiece()">
+    </div>
+    <div class="cut-auto-field">
+      <span class="cut-auto-lbl">⚡ متراج الجبة (تلقائي)</span>
+      <span class="cut-auto-val" id="ct_per_piece">—</span>
+    </div>
+    <div class="cut-field">
+      <label>التاريخ</label>
+      <input type="date" id="ct_date">
+    </div>
+    <div class="cut-field">
+      <label>ملاحظة (اختياري)</label>
+      <input type="text" id="ct_note" placeholder="">
+    </div>
+    <button class="cut-save-btn" onclick="saveCutRecord()">💾 حفظ</button>
+    <button onclick="closeCutSheet()" style="width:100%;height:40px;background:transparent;border:none;font-family:Cairo,sans-serif;font-size:.85rem;color:var(--ink3);cursor:pointer;margin-top:.4rem;">إلغاء</button>
+  </div>
+</div>
+
 </body>
 </html>
