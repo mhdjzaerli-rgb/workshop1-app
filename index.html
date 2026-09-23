@@ -565,7 +565,7 @@ var TODAY = new Date().toISOString().split('T')[0];
 var db = null;
 
 // Cutting Module Variables
-var cutRecords=[], editingCutId=null, ctSelSizes=[], cutCurQty=1;
+var cutRecords=[], editingCutId=null, ctSelSizes=[];
 var ALL_SIZES=['XS','S','M','L','XL','XXL','3XL'];
 
 function setScreen(name) {
@@ -1644,13 +1644,6 @@ function toggleCutSize(s){
   buildSizesGrid();
 }
 
-function changeCutQty(d) {
-  cutCurQty = Math.max(1, cutCurQty + d);
-  document.getElementById('cutQtyDisplay').textContent = cutCurQty;
-  document.getElementById('ct_qty').value = cutCurQty;
-  calcCutPerPiece();
-}
-
 function calcCutPerPiece(){
   var f=parseFloat(document.getElementById('ct_fabric').value)||0;
   var q=parseInt(document.getElementById('ct_qty').value)||0;
@@ -1664,20 +1657,16 @@ function openCutSheet(id){
     var r=cutRecords.find(function(x){return x.id===id;});
     if(!r) return;
     document.getElementById('cutSheetTitle').textContent='✏️ تعديل مطلة';
-    document.getElementById('ct_model').value=r.model||'';    document.getElementById('ct_fabric').value=r.fabric||'';
-    cutCurQty = r.qty || 1;
-    document.getElementById('cutQtyDisplay').textContent = cutCurQty;
-    document.getElementById('ct_qty').value = cutCurQty;
+    document.getElementById('ct_model').value=r.model||'';
+    document.getElementById('ct_fabric').value=r.fabric||'';
+    document.getElementById('ct_qty').value=r.qty||'';
     document.getElementById('ct_note').value=r.note||'';
     document.getElementById('ct_date').value=r.date||TODAY;
     ctSelSizes=r.sizes?r.sizes.slice():[];
   } else {
-    document.getElementById('cutSheetTitle').textContent='✂️ إضافة مطلة';
-    document.getElementById('ct_model').value='';
+    document.getElementById('cutSheetTitle').textContent='✂️ إضافة مطلة';    document.getElementById('ct_model').value='';
     document.getElementById('ct_fabric').value='';
-    cutCurQty = 1;
-    document.getElementById('cutQtyDisplay').textContent = 1;
-    document.getElementById('ct_qty').value = 1;
+    document.getElementById('ct_qty').value='';
     document.getElementById('ct_note').value='';
     ctSelSizes=[];
   }
@@ -1713,7 +1702,8 @@ function saveCutRecord(){
   } else {
     data.createdAt=firebase.firestore.FieldValue.serverTimestamp();
     db.collection('cut_records').add(data)
-      .then(function(){toast('تمت الإضافة ✅');closeCutSheet();})      .catch(function(e){toast('خطأ: '+e.message,'error');});
+      .then(function(){toast('تمت الإضافة ✅');closeCutSheet();})
+      .catch(function(e){toast('خطأ: '+e.message,'error');});
   }
 }
 
@@ -1724,7 +1714,6 @@ function deleteCutRecord(id){
     .catch(function(e){toast('خطأ: '+e.message,'error');});
 }
 </script>
-
 <!-- CUT SHEET OVERLAY -->
 <div class="cut-sheet-overlay" id="cutOverlay" onclick="if(event.target===this)closeCutSheet()">
   <div class="cut-sheet">
@@ -1743,12 +1732,7 @@ function deleteCutRecord(id){
     </div>
     <div class="cut-field">
       <label>العدد الإجمالي (جبة)</label>
-      <div class="qty-control">
-        <button type="button" class="qty-btn" onclick="changeCutQty(-1)">−</button>
-        <div class="qty-val" id="cutQtyDisplay">1</div>
-        <button type="button" class="qty-btn" onclick="changeCutQty(1)">+</button>
-      </div>
-      <input type="hidden" id="ct_qty" value="1">
+      <input type="number" id="ct_qty" placeholder="0" min="1" oninput="calcCutPerPiece()">
     </div>
     <div class="cut-auto-field">
       <span class="cut-auto-lbl">⚡ متراج الجبة (تلقائي)</span>
@@ -1762,7 +1746,8 @@ function deleteCutRecord(id){
       <label>ملاحظة (اختياري)</label>
       <input type="text" id="ct_note" placeholder="">
     </div>
-    <button class="cut-save-btn" onclick="saveCutRecord()">💾 حفظ</button>    <button onclick="closeCutSheet()" style="width:100%;height:40px;background:transparent;border:none;font-family:Cairo,sans-serif;font-size:.85rem;color:var(--ink3);cursor:pointer;margin-top:.4rem;">إلغاء</button>
+    <button class="cut-save-btn" onclick="saveCutRecord()">💾 حفظ</button>
+    <button onclick="closeCutSheet()" style="width:100%;height:40px;background:transparent;border:none;font-family:Cairo,sans-serif;font-size:.85rem;color:var(--ink3);cursor:pointer;margin-top:.4rem;">إلغاء</button>
   </div>
 </div>
 
