@@ -612,24 +612,6 @@ function syncBadge(state) {
 }
 
 // ── INIT ─────────────────────────────────────────────
-function doFallbackLogin() {
-  var savedSession = localStorage.getItem('ws_session');
-  var savedWorker  = localStorage.getItem('ws_worker');
-  if(savedSession === 'admin') {
-    isAdmin=true; isUser=false; setScreen('adminApp');
-    document.getElementById('adminRoleLabel').textContent='لوحة المدير';
-    showAdminPage('records'); refreshAdmin();
-  } else if(savedSession === 'user') {
-    isUser=true; isAdmin=false; setScreen('adminApp');
-    document.getElementById('adminRoleLabel').textContent='عرض المستخدم';
-    showAdminPage('records'); refreshAdmin();
-  } else if(savedSession === 'worker' && savedWorker) {
-    enterWorker(savedWorker);
-  } else {
-    setScreen('home');
-  }
-}
-
 function initApp() {
   workers = DEFAULT_WORKERS.slice();
   models  = DEFAULT_MODELS.slice();
@@ -637,30 +619,44 @@ function initApp() {
 
   setScreen('loading');
 
-  // Timeout fallback — 5 ثوان فقط ثم يفتح بالبيانات المحلية
+  // Timeout fallback — يفتح التطبيق بعد 8 ثوانٍ حتى لو Firebase بطيء
   var tid = setTimeout(function(){
-    toast('اتصال بطيء — جاري الفتح…','error');
-    doFallbackLogin();
-  }, 5000);
+    toast('تعذّر الاتصال — وضع محلي مؤقت','error');
+    var savedSession = localStorage.getItem('ws_session');
+    var savedWorker  = localStorage.getItem('ws_worker');
+    if(savedSession === 'admin') {
+      isAdmin=true; isUser=false; setScreen('adminApp');
+      document.getElementById('adminRoleLabel').textContent='لوحة المدير';
+      showAdminPage('records'); refreshAdmin();
+    } else if(savedSession === 'user') {
+      isUser=true; isAdmin=false; setScreen('adminApp');
+      document.getElementById('adminRoleLabel').textContent='عرض المستخدم';
+      showAdminPage('records'); refreshAdmin();
+    } else if(savedSession === 'worker' && savedWorker) {
+      enterWorker(savedWorker);
+    } else {
+      setScreen('home');
+    }
+  }, 6000);
 
   try {
     firebase.initializeApp(FIREBASE_CONFIG);
     db = firebase.firestore();
-    // تفعيل cache محلي لتسريع الفتح
-    db.settings({ cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED });
-    db.enablePersistence({ synchronizeTabs: false }).catch(function(){});
+    db.enablePersistence({synchronizeTabs:false}).catch(function(err){
+      console.warn('Persistence error:',err.code);
+    });
     var auth = firebase.auth();
 
     // مراقبة حالة تسجيل دخول المدير
     auth.onAuthStateChanged(function(user) {
       if(user) {
+        // المدير مسجّل دخوله عبر Firebase
         localStorage.setItem('ws_session','admin');
       }
     });
 
-    // Test connection — source cache أولاً للسرعة
-    db.collection('settings').doc('workshop_config').get({ source: 'cache' })
-      .catch(function(){ return db.collection('settings').doc('workshop_config').get(); })
+    // Test connection
+    db.collection('settings').doc('workshop_config').get({source:'cache'}).catch(function(){ return db.collection('settings').doc('workshop_config').get(); })
       .then(function(snap){
         clearTimeout(tid);
         if(!snap.exists){
@@ -683,12 +679,14 @@ function initApp() {
           if(isAdmin || isUser) refreshAdmin(); else renderHome();
         });
         db.collection('records').onSnapshot(function(snap){
-          records = snap.docs.map(function(d){ return Object.assign({id:d.id},d.data()); });
-          records.sort(function(a,b){ return b.date.localeCompare(a.date); });
-          syncBadge('ok');
-          if(isAdmin || isUser) refreshAdmin();
-          else if(currentWorker) renderWorkerRecents();
-        });
+          try {
+            records = snap.docs.map(function(d){ return Object.assign({id:d.id},d.data()); });
+            records.sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); });
+            syncBadge('ok');
+            if(isAdmin || isUser) refreshAdmin();
+            else if(currentWorker) renderWorkerRecents();
+          } catch(ex){ console.warn('records render error:',ex); }
+        }, function(err){ console.warn('records listener error:',err); });
         try {
           db.collection('cut_records').onSnapshot(function(snap){
             cutRecords=[];
@@ -698,7 +696,27 @@ function initApp() {
           }, function(err){console.warn('cut_records listener error:',err);});
         } catch(e){ console.warn('cut_records setup error:',e); }
         // ── استعادة الجلسة المحفوظة ──
-        doFallbackLogin();
+        var savedSession = localStorage.getItem('ws_session');
+        var savedWorker  = localStorage.getItem('ws_worker');
+        if(savedSession === 'admin') {
+          isAdmin=true; isUser=false; currentWorker=null;
+          setScreen('adminApp');
+          document.getElementById('adminRoleLabel').textContent='لوحة المدير';
+          showAdminPage('records');
+          refreshAdmin();
+          syncBadge('ok');
+        } else if(savedSession === 'user') {
+          isUser=true; isAdmin=false; currentWorker=null;
+          setScreen('adminApp');
+          document.getElementById('adminRoleLabel').textContent='عرض المستخدم';
+          showAdminPage('records');
+          refreshAdmin();
+          syncBadge('ok');
+        } else if(savedSession === 'worker' && savedWorker) {
+          enterWorker(savedWorker);
+        } else {
+          setScreen('home');
+        }
       })
       .catch(function(e){
         clearTimeout(tid);
