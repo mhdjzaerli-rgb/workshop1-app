@@ -682,12 +682,14 @@ function initApp() {
           if(isAdmin || isUser) refreshAdmin();
           else if(currentWorker) renderWorkerRecents();
         });
-        db.collection('cut_records').onSnapshot(function(snap){
-          cutRecords=[];
-          snap.forEach(function(d){cutRecords.push(Object.assign({id:d.id},d.data()));});
-          cutRecords.sort(function(a,b){return (b.createdAt&&b.createdAt.seconds||0)-(a.createdAt&&a.createdAt.seconds||0);});
-          if(document.getElementById('adminScroll').dataset.page==='cutting') renderCutPage();
-        }, function(err){console.log('cut_records error:',err);});
+        try {
+          db.collection('cut_records').onSnapshot(function(snap){
+            cutRecords=[];
+            snap.forEach(function(d){cutRecords.push(Object.assign({id:d.id},d.data()));});
+            cutRecords.sort(function(a,b){return (b.createdAt&&b.createdAt.seconds||0)-(a.createdAt&&a.createdAt.seconds||0);});
+            var sc=document.getElementById('adminScroll'); if(sc&&sc.dataset.page==='cutting') renderCutPage();
+          }, function(err){console.warn('cut_records listener error:',err);});
+        } catch(e){ console.warn('cut_records setup error:',e); }
         // ── استعادة الجلسة المحفوظة ──
         var savedSession = localStorage.getItem('ws_session');
         var savedWorker  = localStorage.getItem('ws_worker');
@@ -1680,8 +1682,8 @@ function renderCutPage(){
         (r.note?'<div class="cut-card-row"><span class="cut-card-lbl">📝 ملاحظة</span><span class="cut-card-val">'+r.note+'</span></div>':'')+
       '</div>'+
       (canEdit?'<div class="cut-card-actions">'+
-        '<button class="cut-act-btn" onclick="openCutSheet(''+r.id+'')">✏️ تعديل</button>'+
-        (isAdmin?'<button class="cut-act-btn danger" onclick="deleteCutRecord(''+r.id+'')">🗑️ حذف</button>':'')+
+        '<button class="cut-act-btn" onclick="openCutSheet(\'' + r.id + '\')">✏️ تعديل</button>'+
+        (isAdmin?'<button class="cut-act-btn danger" onclick="deleteCutRecord(\'' + r.id + '\')">🗑️ حذف</button>':'')+
       '</div>':'')+
     '</div>';
   }).join('');
@@ -1690,14 +1692,14 @@ function renderCutPage(){
 function buildSizesGrid(){
   document.getElementById('ct_sizes_grid').innerHTML=ALL_SIZES.map(function(s){
     var on=ctSelSizes.indexOf(s)>-1;
-    return '<button type="button" class="cut-size-chip'+(on?' on':'')+'" onclick="toggleCutSize(''+s+'')">'+s+'</button>';
+    return '<button type="button" class="cut-size-chip'+(on?' on':'')+'" onclick="toggleCutSize(this,''+s+'')" style="margin:.2rem">'+ s+'</button>';
   }).join('');
 }
 
-function toggleCutSize(s){
+function toggleCutSize(btn, s){
   var i=ctSelSizes.indexOf(s);
-  if(i>-1) ctSelSizes.splice(i,1); else ctSelSizes.push(s);
-  buildSizesGrid();
+  if(i>-1){ ctSelSizes.splice(i,1); btn.classList.remove('on'); }
+  else { ctSelSizes.push(s); btn.classList.add('on'); }
 }
 
 function calcCutPerPiece(){
