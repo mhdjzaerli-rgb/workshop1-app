@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<link rel="manifest" href="manifest.json">
+  <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#2c1a0e">
 <title>ورشة الخياطة</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -13,15 +13,6 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-
-<script>
-// مراقب الأخطاء العام لعرضها في حال حدوث مشكلة على الموبايل
-window.onerror = function(msg, url, line) {
-  console.error('خطأ في التطبيق: ' + msg + '\nالسطر: ' + line);
-  return false;
-};
-</script>
-
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Amiri:wght@400;700&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
@@ -47,7 +38,8 @@ html,body{height:100%;overflow:hidden;font-family:'Cairo',sans-serif;background:
 .loading-bar-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));animation:loadBar 1.8s ease-in-out infinite;}
 @keyframes loadBar{0%{width:0%;margin-right:100%}50%{width:60%;margin-right:20%}100%{width:0%;margin-left:100%}}
 #screen-home{background:linear-gradient(160deg,#2c1a0e 0%,#4a2c14 40%,#2c1a0e 100%);align-items:center;overflow-y:auto;padding:2rem 1.2rem calc(1.5rem + var(--safe-b));}
-.home-logo{display:flex;flex-direction:column;align-items:center;gap:.6rem;margin-bottom:2rem;}.home-logo-icon{width:72px;height:72px;background:linear-gradient(135deg,var(--gold),var(--gold2));border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:2.2rem;box-shadow:0 8px 30px rgba(184,137,42,.4);}
+.home-logo{display:flex;flex-direction:column;align-items:center;gap:.6rem;margin-bottom:2rem;}
+.home-logo-icon{width:72px;height:72px;background:linear-gradient(135deg,var(--gold),var(--gold2));border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:2.2rem;box-shadow:0 8px 30px rgba(184,137,42,.4);}
 .home-logo-title{font-family:'Amiri',serif;font-size:1.6rem;color:#f5e6c0;font-weight:700;}
 .home-logo-sub{font-size:.75rem;color:var(--gold2);}
 .home-section-label{font-size:.75rem;font-weight:700;color:var(--gold2);letter-spacing:1.5px;margin-bottom:.75rem;align-self:flex-start;width:100%;max-width:420px;}
@@ -96,7 +88,8 @@ html,body{height:100%;overflow:hidden;font-family:'Cairo',sans-serif;background:
 .wform-grid2{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;}
 .qty-control{display:flex;align-items:center;gap:.75rem;}
 .qty-btn{width:48px;height:48px;border:none;background:var(--teal-light);border-radius:12px;font-size:1.4rem;font-weight:700;color:var(--teal);cursor:pointer;}
-.qty-btn:active{background:var(--teal);color:white;}.qty-val{flex:1;text-align:center;font-size:1.6rem;font-weight:900;color:var(--ink);}
+.qty-btn:active{background:var(--teal);color:white;}
+.qty-val{flex:1;text-align:center;font-size:1.6rem;font-weight:900;color:var(--ink);}
 .worker-submit-btn{width:100%;padding:.9rem;background:linear-gradient(135deg,var(--teal),var(--teal2));border:none;border-radius:13px;font-family:'Cairo',sans-serif;font-size:1rem;font-weight:700;color:white;cursor:pointer;margin-top:.5rem;}
 .worker-submit-btn:active{opacity:.88;}
 .worker-recents-section{margin:.5rem .85rem .85rem;}
@@ -145,7 +138,8 @@ html,body{height:100%;overflow:hidden;font-family:'Cairo',sans-serif;background:
 .rec-qty-lbl{font-size:.6rem;color:var(--ink3);text-align:center;}
 .rec-card-tags{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.6rem;}
 .tag{display:inline-flex;align-items:center;gap:.3rem;padding:.2rem .6rem;border-radius:20px;font-size:.7rem;font-weight:700;}
-.tag-model{background:var(--gold-light);color:var(--gold);border:1px solid rgba(184,137,42,.25);}.tag-size{background:var(--teal-light);color:var(--teal);border:1px solid rgba(26,107,92,.25);}
+.tag-model{background:var(--gold-light);color:var(--gold);border:1px solid rgba(184,137,42,.25);}
+.tag-size{background:var(--teal-light);color:var(--teal);border:1px solid rgba(26,107,92,.25);}
 .tag-color{border:1px solid rgba(0,0,0,.1);}
 .cdot-sm{width:10px;height:10px;border-radius:50%;border:1px solid rgba(0,0,0,.15);flex-shrink:0;}
 .rec-note{font-size:.73rem;color:var(--ink3);background:var(--bg2);border-radius:7px;padding:.3rem .6rem;margin-bottom:.6rem;}
@@ -194,7 +188,8 @@ html,body{height:100%;overflow:hidden;font-family:'Cairo',sans-serif;background:
 .rs-header{padding:.65rem 1rem;background:var(--surface2);border-bottom:1px solid var(--border);}
 .rs-title{font-family:'Amiri',serif;font-size:.92rem;font-weight:700;color:var(--ink);}
 .rs-body{padding:.85rem;}
-.bar-chart{display:flex;flex-direction:column;gap:.6rem;}.bar-row{display:flex;align-items:center;gap:.65rem;}
+.bar-chart{display:flex;flex-direction:column;gap:.6rem;}
+.bar-row{display:flex;align-items:center;gap:.65rem;}
 .bar-lbl{font-size:.75rem;font-weight:600;color:var(--ink2);min-width:62px;text-align:right;}
 .bar-track{flex:1;background:var(--bg2);border-radius:20px;height:22px;overflow:hidden;}
 .bar-fill{height:100%;border-radius:20px;display:flex;align-items:center;justify-content:flex-end;}
@@ -243,7 +238,8 @@ html,body{height:100%;overflow:hidden;font-family:'Cairo',sans-serif;background:
 .si-del{width:32px;height:32px;border:none;background:var(--rose-light);color:var(--rose);border-radius:8px;font-size:.85rem;cursor:pointer;}
 .add-item-row{padding:.7rem 1rem;}
 .add-item-row input[type=text]{width:100%;padding:.55rem .85rem;background:var(--bg2);border:1px solid var(--border2);border-radius:9px;font-family:'Cairo',sans-serif;font-size:.88rem;color:var(--ink);outline:none;}
-.add-item-btn{width:100%;margin-top:.4rem;padding:.55rem;background:var(--gold-light);border:1px solid rgba(184,137,42,.4);border-radius:9px;font-family:'Cairo',sans-serif;font-size:.82rem;font-weight:700;color:var(--gold);cursor:pointer;}.overlay{position:fixed;inset:0;background:rgba(44,26,14,.55);display:none;align-items:flex-end;justify-content:center;z-index:200;}
+.add-item-btn{width:100%;margin-top:.4rem;padding:.55rem;background:var(--gold-light);border:1px solid rgba(184,137,42,.4);border-radius:9px;font-family:'Cairo',sans-serif;font-size:.82rem;font-weight:700;color:var(--gold);cursor:pointer;}
+.overlay{position:fixed;inset:0;background:rgba(44,26,14,.55);display:none;align-items:flex-end;justify-content:center;z-index:200;}
 .overlay.show{display:flex;}
 .sheet{background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-height:92vh;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 0 calc(1rem + var(--safe-b));}
 .sheet-handle{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:.75rem auto .5rem;}
@@ -292,7 +288,8 @@ html,body{height:100%;overflow:hidden;font-family:'Cairo',sans-serif;background:
 .pwa-no{padding:.4rem .7rem;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:8px;font-family:'Cairo',sans-serif;font-size:.74rem;color:rgba(255,255,255,.6);cursor:pointer;}
 .filter-row-line{display:flex;gap:.45rem;align-items:center;}
 
-/* ====== CUTTING (القص) PAGE ====== */.cut-stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:.55rem;margin:.85rem .85rem .5rem;}
+/* ====== CUTTING (القص) PAGE ====== */
+.cut-stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:.55rem;margin:.85rem .85rem .5rem;}
 .cut-stat-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:.7rem .5rem;text-align:center;}
 .cut-stat-val{font-size:1.35rem;font-weight:900;color:var(--teal);font-family:'Amiri',serif;}
 .cut-stat-lbl{font-size:.62rem;color:var(--ink3);font-weight:600;margin-top:.15rem;}
@@ -327,6 +324,7 @@ html,body{height:100%;overflow:hidden;font-family:'Cairo',sans-serif;background:
 .cut-fab{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--nav-h) + var(--safe-b) + .8rem);z-index:40;width:56px;height:56px;background:linear-gradient(135deg,var(--teal),var(--teal2));border:none;border-radius:50%;font-size:1.6rem;color:white;box-shadow:0 4px 20px rgba(26,107,92,.45);cursor:pointer;display:none;align-items:center;justify-content:center;}
 .cut-empty{text-align:center;padding:3rem 1rem;color:var(--ink3);}
 .cut-empty-icon{font-size:3rem;margin-bottom:.75rem;}
+
 </style>
 </head>
 <body>
@@ -341,7 +339,8 @@ html,body{height:100%;overflow:hidden;font-family:'Cairo',sans-serif;background:
         <button class="pwa-yes" id="pwaInstallBtn" onclick="pwaTriggerInstall()">📲 تثبيت</button>
         <button class="pwa-no" onclick="pwaDismiss()">لاحقاً</button>
       </div>
-    </div>  </div>
+    </div>
+  </div>
 </div>
 <div id="screen-loading">
   <div class="loading-icon">🧵</div>
@@ -390,7 +389,8 @@ html,body{height:100%;overflow:hidden;font-family:'Cairo',sans-serif;background:
     <div class="apw-icon">👤</div>
     <div class="apw-title">دخول المستخدم</div>
     <input class="apw-input" type="password" id="userPw" placeholder="كلمة السر" autocomplete="off" onkeydown="if(event.key==='Enter')tryUserLogin()">
-    <div class="apw-err" id="userPwErr">❌ كلمة السر غير صحيحة</div>    <div class="apw-btns">
+    <div class="apw-err" id="userPwErr">❌ كلمة السر غير صحيحة</div>
+    <div class="apw-btns">
       <button class="apw-cancel" onclick="closeUserLogin()">إلغاء</button>
       <button class="apw-submit" style="background:linear-gradient(135deg,var(--teal),var(--teal2));border-color:var(--teal)" onclick="tryUserLogin()">🔓 دخول</button>
     </div>
@@ -439,7 +439,8 @@ html,body{height:100%;overflow:hidden;font-family:'Cairo',sans-serif;background:
     </div>
     <div class="worker-recents-section">
       <div class="wrs-title">🕐 آخر سجلاتك</div>
-      <div id="workerRecentsList"></div>    </div>
+      <div id="workerRecentsList"></div>
+    </div>
   </div>
 </div>
 
@@ -488,7 +489,8 @@ html,body{height:100%;overflow:hidden;font-family:'Cairo',sans-serif;background:
     <button class="anav-btn active" id="anav-records" onclick="showAdminPage('records')"><span class="nav-icon">🪡</span>السجلات</button>
     <button class="anav-btn" id="anav-summary" onclick="showAdminPage('summary')"><span class="nav-icon">📋</span>الملخص</button>
     <button class="anav-btn" id="anav-report" onclick="showAdminPage('report')"><span class="nav-icon">📅</span>التقرير</button>
-    <button class="anav-btn" id="anav-cutting" onclick="showAdminPage('cutting')"><span class="nav-icon">✂️</span>القص</button>    <button class="anav-btn" id="anav-settings" onclick="showAdminPage('settings')"><span class="nav-icon">⚙️</span>الإعدادات</button>
+    <button class="anav-btn" id="anav-cutting" onclick="showAdminPage('cutting')"><span class="nav-icon">✂️</span>القص</button>
+    <button class="anav-btn" id="anav-settings" onclick="showAdminPage('settings')"><span class="nav-icon">⚙️</span>الإعدادات</button>
   </nav>
 </div>
 
@@ -538,6 +540,7 @@ html,body{height:100%;overflow:hidden;font-family:'Cairo',sans-serif;background:
     </div>
   </div>
 </div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -552,8 +555,8 @@ var FIREBASE_CONFIG = {
   messagingSenderId: "175989367938",
   appId:             "1:175989367938:web:8afdfbc19c1ac71d55809b"
 };
-var ADMIN_EMAIL    = "admin@workshop.com";
-var USER_PASSWORD  = "0000";
+var ADMIN_EMAIL    = "admin@workshop.com"; // الإيميل المستخدم في Firebase Auth
+var USER_PASSWORD  = "0000";  // كلمة سر المستخدم — يمكن للمدير تغييرها
 // ══════════════════════════════════════════════════════
 
 var DEFAULT_WORKERS = ['ناريمان','مينا','شاهيناز','سويكي'];
@@ -586,7 +589,8 @@ function setScreen(name) {
   });
   var t = document.getElementById('screen-'+name);
   if(t){
-    t.style.display='flex';    t.style.flexDirection='column';
+    t.style.display='flex';
+    t.style.flexDirection='column';
     if(name==='home') t.style.flexDirection='column';
   }
 }
@@ -607,7 +611,7 @@ function syncBadge(state) {
   el.textContent = map[state]||'☁️';
 }
 
-// ── INIT (محسّن ومقاوم للتعليق) ──────────────────────
+// ── INIT ─────────────────────────────────────────────
 function initApp() {
   workers = DEFAULT_WORKERS.slice();
   models  = DEFAULT_MODELS.slice();
@@ -615,10 +619,9 @@ function initApp() {
 
   setScreen('loading');
 
-  // مهلة 4 ثوانٍ فقط كحد أقصى للانتظار
+  // Timeout fallback — يفتح التطبيق بعد 8 ثوانٍ حتى لو Firebase بطيء
   var tid = setTimeout(function(){
-    console.warn('Firebase timeout - using local mode');
-    toast('تعذّر الاتصال — وضع محلي','error');
+    toast('تعذّر الاتصال — وضع محلي مؤقت','error');
     var savedSession = localStorage.getItem('ws_session');
     var savedWorker  = localStorage.getItem('ws_worker');
     if(savedSession === 'admin') {
@@ -633,113 +636,82 @@ function initApp() {
       enterWorker(savedWorker);
     } else {
       setScreen('home');
-      renderHome();
     }
-  }, 4000);
+  }, 15000);
+
   try {
-    if(typeof firebase === 'undefined') {
-      throw new Error('Firebase not loaded');
-    }
-    
     firebase.initializeApp(FIREBASE_CONFIG);
     db = firebase.firestore();
-    
-    db.enablePersistence({synchronizeTabs:false}).catch(function(err) {
-      console.warn('Persistence error:', err.code);
-    });
-    
     var auth = firebase.auth();
+
+    // مراقبة حالة تسجيل دخول المدير
     auth.onAuthStateChanged(function(user) {
       if(user) {
+        // المدير مسجّل دخوله عبر Firebase
         localStorage.setItem('ws_session','admin');
       }
     });
 
-    // اختبار الاتصال مع مهلة داخلية
-    Promise.race([
-      db.collection('settings').doc('workshop_config').get({source:'cache'}),
-      new Promise(function(_, reject) {
-        setTimeout(function() { reject(new Error('Timeout')); }, 3000);
+    // Test connection
+    db.collection('settings').doc('workshop_config').get()
+      .then(function(snap){
+        clearTimeout(tid);
+        if(!snap.exists){
+          return db.collection('settings').doc('workshop_config').set({
+            workers: DEFAULT_WORKERS, models: DEFAULT_MODELS, colors: DEFAULT_COLORS
+          });
+        } else {
+          var d = snap.data();
+          workers = d.workers || DEFAULT_WORKERS.slice();
+          models  = d.models  || DEFAULT_MODELS.slice();
+          colors  = d.colors  || DEFAULT_COLORS.map(function(c){return {name:c.name,hex:c.hex};});
+        }
       })
-    ])
-    .then(function(snap){
-      clearTimeout(tid);
-      if(!snap || !snap.exists){
-        return db.collection('settings').doc('workshop_config').set({
-          workers: DEFAULT_WORKERS, 
-          models: DEFAULT_MODELS, 
-          colors: DEFAULT_COLORS
+      .then(function(){
+        // Live listeners
+        db.collection('settings').doc('workshop_config').onSnapshot(function(snap){
+          if(!snap.exists) return;
+          var d=snap.data();
+          workers=d.workers||[]; models=d.models||[]; colors=d.colors||[];
+          if(isAdmin || isUser) refreshAdmin(); else renderHome();
         });
-      } else {
-        var d = snap.data();
-        workers = d.workers || DEFAULT_WORKERS.slice();
-        models  = d.models  || DEFAULT_MODELS.slice();
-        colors  = d.colors  || DEFAULT_COLORS.map(function(c){return {name:c.name,hex:c.hex};});
-      }
-    })
-    .then(function(){
-      // Live listeners
-      db.collection('settings').doc('workshop_config').onSnapshot(function(snap){
-        if(!snap.exists) return;
-        var d=snap.data();
-        workers=d.workers||[]; models=d.models||[]; colors=d.colors||[];
-        if(isAdmin || isUser) refreshAdmin(); 
-        else if(currentWorker) renderWorkerRecents();        else renderHome();
-      });
-      
-      db.collection('records').onSnapshot(function(snap){
-        try {
+        db.collection('records').onSnapshot(function(snap){
           records = snap.docs.map(function(d){ return Object.assign({id:d.id},d.data()); });
-          records.sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); });
+          records.sort(function(a,b){ return b.date.localeCompare(a.date); });
           syncBadge('ok');
           if(isAdmin || isUser) refreshAdmin();
           else if(currentWorker) renderWorkerRecents();
-        } catch(ex){ console.warn('records render error:',ex); }
-      }, function(err){ 
-        console.warn('records listener error:',err); 
-        syncBadge('err');
-      });
-      
-      try {
-        db.collection('cut_records').onSnapshot(function(snap){
-          cutRecords=[];
-          snap.forEach(function(d){cutRecords.push(Object.assign({id:d.id},d.data()));});
-          cutRecords.sort(function(a,b){return (b.createdAt&&b.createdAt.seconds||0)-(a.createdAt&&a.createdAt.seconds||0);});
-          var sc=document.getElementById('adminScroll'); if(sc&&sc.dataset.page==='cutting') renderCutPage();
-        }, function(err){console.warn('cut_records listener error:',err);});
-      } catch(e){ console.warn('cut_records setup error:',e); }
-      
-      // استعادة الجلسة
-      var savedSession = localStorage.getItem('ws_session');
-      var savedWorker  = localStorage.getItem('ws_worker');
-      if(savedSession === 'admin') {
-        isAdmin=true; isUser=false; currentWorker=null;
-        setScreen('adminApp');
-        document.getElementById('adminRoleLabel').textContent='لوحة المدير';
-        showAdminPage('records');
-        refreshAdmin();
-        syncBadge('ok');
-      } else if(savedSession === 'user') {
-        isUser=true; isAdmin=false; currentWorker=null;
-        setScreen('adminApp');
-        document.getElementById('adminRoleLabel').textContent='عرض المستخدم';
-        showAdminPage('records');
-        refreshAdmin();
-        syncBadge('ok');
-      } else if(savedSession === 'worker' && savedWorker) {
-        enterWorker(savedWorker);
-      } else {
+        });
+        // ── استعادة الجلسة المحفوظة ──
+        var savedSession = localStorage.getItem('ws_session');
+        var savedWorker  = localStorage.getItem('ws_worker');
+        if(savedSession === 'admin') {
+          isAdmin=true; isUser=false; currentWorker=null;
+          setScreen('adminApp');
+          document.getElementById('adminRoleLabel').textContent='لوحة المدير';
+          showAdminPage('records');
+          refreshAdmin();
+          syncBadge('ok');
+        } else if(savedSession === 'user') {
+          isUser=true; isAdmin=false; currentWorker=null;
+          setScreen('adminApp');
+          document.getElementById('adminRoleLabel').textContent='عرض المستخدم';
+          showAdminPage('records');
+          refreshAdmin();
+          syncBadge('ok');
+        } else if(savedSession === 'worker' && savedWorker) {
+          enterWorker(savedWorker);
+        } else {
+          setScreen('home');
+        }
+      })
+      .catch(function(e){
+        clearTimeout(tid);
+        console.error('Firestore error:',e);
+        toast('خطأ Firebase: '+e.code,'error');
         setScreen('home');
         renderHome();
-      }
-    })
-    .catch(function(e){      clearTimeout(tid);
-      console.error('Firestore error:',e);
-      toast('وضع محلي - '+e.message,'error');
-      setScreen('home');
-      renderHome();
-    });
-    
+      });
   } catch(e) {
     clearTimeout(tid);
     console.error('Init error:',e);
@@ -782,7 +754,8 @@ function tryAdminLogin() {
       isAdmin=true; isUser=false; currentWorker=null;
       localStorage.setItem('ws_session','admin');
       closeAdminLogin();
-      setScreen('adminApp');      document.getElementById('adminRoleLabel').textContent='لوحة المدير';
+      setScreen('adminApp');
+      document.getElementById('adminRoleLabel').textContent='لوحة المدير';
       showAdminPage('records');
       refreshAdmin();
       syncBadge('ok');
@@ -827,11 +800,13 @@ function adminLogout() {
   isAdmin=false; isUser=false;
   localStorage.removeItem('ws_session');
   localStorage.removeItem('ws_worker');
+  // تسجيل خروج Firebase للمدير
   try { firebase.auth().signOut(); } catch(e) {}
   setScreen('home');
   renderHome();
 }
-function goHome() {  currentWorker=null; isAdmin=false; isUser=false;
+function goHome() {
+  currentWorker=null; isAdmin=false; isUser=false;
   localStorage.removeItem('ws_session');
   localStorage.removeItem('ws_worker');
   setScreen('home');
@@ -880,7 +855,8 @@ function buildWColorPicker() {
   document.getElementById('wf_color').value='';
 }
 
-function wPickColor(n) {  wSelColor=n;
+function wPickColor(n) {
+  wSelColor=n;
   document.getElementById('wf_color').value=n;
   document.querySelectorAll('#wColorPicker .cpick').forEach(function(el){el.classList.remove('active');});
   var el=document.getElementById('wcp_'+n);
@@ -929,7 +905,8 @@ function renderWorkerRecents() {
     var hex=gch(r.color);
     return '<div class="wrec-card">'+
       '<div style="display:flex;justify-content:space-between;align-items:center">'+
-      '<div><div class="wrec-date">'+r.date+'</div>'+      '<div class="wrec-tags">'+
+      '<div><div class="wrec-date">'+r.date+'</div>'+
+      '<div class="wrec-tags">'+
       '<span class="tag tag-model">👗 '+r.model+'</span>'+
       '<span class="tag tag-size">📐 '+r.size+'</span>'+
       '<span class="tag tag-color" style="background:'+hex+'22;color:'+hex+';border:1px solid '+hex+'44">'+
@@ -978,7 +955,8 @@ function applyFilters() {
 function renderMiniStats(fr) {
   var total=fr.reduce(function(s,r){return s+r.qty;},0);
   var wm={};fr.forEach(function(r){wm[r.worker]=(wm[r.worker]||0)+r.qty;});
-  var best=Object.entries(wm).sort(function(a,b){return b[1]-a[1];})[0];  document.getElementById('adminMiniStats').innerHTML='<div class="mini-stats">'+
+  var best=Object.entries(wm).sort(function(a,b){return b[1]-a[1];})[0];
+  document.getElementById('adminMiniStats').innerHTML='<div class="mini-stats">'+
     '<div class="mini-stat"><div class="mini-stat-icon">🧵</div><div><div class="mini-stat-val">'+total+'</div><div class="mini-stat-lbl">إجمالي الجبب</div></div></div>'+
     '<div class="mini-stat"><div class="mini-stat-icon">📋</div><div><div class="mini-stat-val">'+fr.length+'</div><div class="mini-stat-lbl">السجلات</div></div></div>'+
     '<div class="mini-stat"><div class="mini-stat-icon">👩</div><div><div class="mini-stat-val">'+new Set(fr.map(function(r){return r.worker;})).size+'</div><div class="mini-stat-lbl">موظفات</div></div></div>'+
@@ -1027,7 +1005,8 @@ function renderAdminCards(fr) {
     return '<div class="rec-card">'+
       '<div class="rec-card-top"><div class="rec-worker">'+
       '<div class="worker-avatar">'+(r.worker||'؟').charAt(0)+'</div>'+
-      '<div><div class="worker-name">'+(r.worker||'—')+'</div><div class="worker-date">'+(r.date||'')+'</div></div></div>'+      '<div style="text-align:center"><div class="rec-qty">'+r.qty+'</div><div class="rec-qty-lbl">جبة</div></div></div>'+
+      '<div><div class="worker-name">'+(r.worker||'—')+'</div><div class="worker-date">'+(r.date||'')+'</div></div></div>'+
+      '<div style="text-align:center"><div class="rec-qty">'+r.qty+'</div><div class="rec-qty-lbl">جبة</div></div></div>'+
       '<div class="rec-card-tags">'+
       '<span class="tag tag-model">👗 '+r.model+'</span>'+
       '<span class="tag tag-size">📐 '+r.size+'</span>'+
@@ -1076,7 +1055,8 @@ function openAddRecord(){
 function openEdit(id){
   var rec=records.find(function(r){return r.id===id;}); if(!rec) return;
   editingId=id; selColor=rec.color; curQty=rec.qty;
-  document.getElementById('recordSheetTitle').textContent='✏️ تعديل السجل';  document.getElementById('r_worker').innerHTML=workers.map(function(w){return '<option>'+w+'</option>';}).join('');
+  document.getElementById('recordSheetTitle').textContent='✏️ تعديل السجل';
+  document.getElementById('r_worker').innerHTML=workers.map(function(w){return '<option>'+w+'</option>';}).join('');
   document.getElementById('r_model').innerHTML=models.map(function(m){return '<option>'+m+'</option>';}).join('');
   document.getElementById('r_worker').value=rec.worker;
   document.getElementById('r_model').value=rec.model;
@@ -1125,7 +1105,8 @@ function saveSettings(){
   if(!db) return;
   db.collection('settings').doc('workshop_config').set({workers:workers,models:models,colors:colors})
     .catch(function(){toast('خطأ في حفظ الإعدادات','error');});
-}function addWorker(){
+}
+function addWorker(){
   var n=document.getElementById('new_worker').value.trim();
   if(!n){toast('أدخلي الاسم','error');return;}
   if(workers.indexOf(n)>-1){toast('موجودة مسبقاً','error');return;}
@@ -1174,7 +1155,8 @@ function renderSummary(){
   }).join('');
 }
 
-// ── Report ────────────────────────────────────────────function renderReport(){
+// ── Report ────────────────────────────────────────────
+function renderReport(){
   var mr=records.filter(function(r){return r.date&&r.date.startsWith(rYear+'-'+String(rMonth+1).padStart(2,'0'));});
   var mn=AM[rMonth]+' '+rYear;
   var totalQ=mr.reduce(function(s,r){return s+r.qty;},0);
@@ -1223,13 +1205,15 @@ function renderSummary(){
     html+='<div class="report-section"><div class="rs-header"><span class="rs-title">👗 إنتاج حسب الموديل</span></div><div class="rs-body"><div class="bar-chart">';
     sM.forEach(function(entry,i){var m=entry[0],q=entry[1],pct=Math.round(q/maxMM*100);html+='<div class="bar-row"><div class="bar-lbl">'+m+'</div><div class="bar-track"><div class="bar-fill" style="width:'+pct+'%;background:'+MC[(i+2)%MC.length]+'"><span class="bar-val">'+q+'</span></div></div></div>';});
     html+='</div></div></div>';
-  }  if(!mr.length) html+='<div class="empty"><div class="empty-icon">📅</div><p>لا توجد بيانات لهذا الشهر</p></div>';
+  }
+  if(!mr.length) html+='<div class="empty"><div class="empty-icon">📅</div><p>لا توجد بيانات لهذا الشهر</p></div>';
   html+='<button class="export-btn-full" onclick="exportMonthly()">📊 تصدير تقرير '+mn+'</button>';
   document.getElementById('reportPage').innerHTML=html;
 }
 
 // ── Settings render ───────────────────────────────────
 function renderSettings(){
+  // ── قسم الموظفات ──
   var workersSection =
     '<div class="settings-section"><div class="settings-section-title">👩 الموظفات</div>'+
     workers.map(function(w,i){
@@ -1237,9 +1221,11 @@ function renderSettings(){
         (isAdmin?'<div><button class="si-del" onclick="removeWorker(\''+w+'\')">🗑️</button></div>':'')+
         '</div>';
     }).join('')+
-    '<div class="add-item-row"><input type="text" id="new_worker" placeholder="اسم موظفة جديدة..."><button class="add-item-btn" onclick="addWorker()">+ إضافة موظفة</button></div>'+
+    (isAdmin?'<div class="add-item-row"><input type="text" id="new_worker" placeholder="اسم موظفة جديدة..."><button class="add-item-btn" onclick="addWorker()">+ إضافة موظفة</button></div>':
+             '<div class="add-item-row"><input type="text" id="new_worker" placeholder="اسم موظفة جديدة..."><button class="add-item-btn" onclick="addWorker()">+ إضافة موظفة</button></div>')+
     '</div>';
 
+  // ── قسم الموديلات ──
   var modelsSection =
     '<div class="settings-section"><div class="settings-section-title">👗 الموديلات</div>'+
     models.map(function(m,i){
@@ -1247,9 +1233,11 @@ function renderSettings(){
         (isAdmin?'<div><button class="si-del" onclick="removeModel(\''+m+'\')">🗑️</button></div>':'')+
         '</div>';
     }).join('')+
-    '<div class="add-item-row"><input type="text" id="new_model" placeholder="اسم موديل جديد..."><button class="add-item-btn" onclick="addModel()">+ إضافة موديل</button></div>'+
+    (isAdmin?'<div class="add-item-row"><input type="text" id="new_model" placeholder="اسم موديل جديد..."><button class="add-item-btn" onclick="addModel()">+ إضافة موديل</button></div>':
+             '<div class="add-item-row"><input type="text" id="new_model" placeholder="اسم موديل جديد..."><button class="add-item-btn" onclick="addModel()">+ إضافة موديل</button></div>')+
     '</div>';
 
+  // ── قسم الألوان ──
   var colorsSection =
     '<div class="settings-section"><div class="settings-section-title">🎨 الألوان</div>'+
     colors.map(function(col){
@@ -1260,6 +1248,7 @@ function renderSettings(){
     '<div class="add-item-row"><input type="text" id="new_color_name" placeholder="اسم اللون..."><div style="display:flex;gap:.5rem;margin-top:.4rem"><input type="color" id="new_color_hex" value="#6699cc" style="width:48px;height:40px;border-radius:9px;border:1px solid var(--border2);padding:2px;cursor:pointer;"><button class="add-item-btn" style="flex:1;margin:0" onclick="addColor()">+ إضافة لون</button></div></div>'+
     '</div>';
 
+  // ── قسم التصدير ──
   var exportSection =
     '<div class="settings-section"><div class="settings-section-title">📊 التصدير والنسخ الاحتياطي</div><div style="padding:.85rem 1rem;display:flex;flex-direction:column;gap:.6rem">'+
     '<button class="export-btn-full" style="margin:0" onclick="exportXLSX()">📊 تصدير كل السجلات (Excel)</button>'+
@@ -1271,14 +1260,18 @@ function renderSettings(){
     : '') +
     '</div></div>';
 
+  // ── قسم كلمات السر (المدير فقط) ──
   var passwordSection = isAdmin ?
-    '<div class="settings-section"><div class="settings-section-title">🔐 كلمات السر</div>'+    '<div style="padding:.85rem 1rem;display:flex;flex-direction:column;gap:.85rem">'+
+    '<div class="settings-section"><div class="settings-section-title">🔐 كلمات السر</div>'+
+    '<div style="padding:.85rem 1rem;display:flex;flex-direction:column;gap:.85rem">'+
+    // تغيير باسورد المدير
     '<div>'+
     '<div style="font-size:.78rem;font-weight:700;color:var(--ink2);margin-bottom:.45rem">🔑 كلمة سر المدير الجديدة</div>'+
     '<div style="display:flex;gap:.5rem">'+
     '<input type="password" id="new_admin_pw" placeholder="كلمة سر جديدة..." style="flex:1;padding:.6rem .85rem;background:var(--bg2);border:1.5px solid var(--border2);border-radius:10px;font-family:Cairo,sans-serif;font-size:.9rem;color:var(--ink);outline:none">'+
     '<button onclick="changeAdminPw()" style="padding:.6rem .9rem;background:linear-gradient(135deg,#2c1a0e,#4a2c14);border:1px solid var(--gold);border-radius:10px;font-family:Cairo,sans-serif;font-size:.8rem;font-weight:700;color:#f5e6c0;cursor:pointer">حفظ</button>'+
     '</div></div>'+
+    // تغيير باسورد اليوزر
     '<div>'+
     '<div style="font-size:.78rem;font-weight:700;color:var(--ink2);margin-bottom:.45rem">👤 كلمة سر المستخدم الجديدة</div>'+
     '<div style="display:flex;gap:.5rem">'+
@@ -1288,6 +1281,7 @@ function renderSettings(){
     '</div></div>'
   : '';
 
+  // ── قسم الإشعارات ──
   var notifEnabled = localStorage.getItem('daily_notif') === '1';
   var notifSection = (isAdmin || isUser) ?
     '<div class="settings-section"><div class="settings-section-title">🔔 الإشعارات</div>'+
@@ -1321,10 +1315,10 @@ function renderSettings(){
 
 function changeAdminPw() {
   var np = document.getElementById('new_admin_pw').value.trim();
-  if(np.length < 4){ toast('يجب أن تكون 4 أحرف على الأقل','error'); return; }  // ملاحظة: لتغيير كلمة سر Firebase فعلياً، يجب استخدام auth.currentUser.updatePassword(np)
-  // هذا التغيير محلي فقط في هذا الإصدار البسيط
+  if(np.length < 4){ toast('يجب أن تكون 4 أحرف على الأقل','error'); return; }
+  ADMIN_PASSWORD = np;
   document.getElementById('new_admin_pw').value='';
-  toast('تم تغيير كلمة سر المدير محلياً ✓','success');
+  toast('تم تغيير كلمة سر المدير ✓','success');
 }
 function changeUserPw() {
   var np = document.getElementById('new_user_pw').value.trim();
@@ -1370,7 +1364,8 @@ function backupJSON(){
 function restoreJSON(input){
   var file = input.files[0];
   if(!file) return;
-  var reader = new FileReader();  reader.onload = function(e){
+  var reader = new FileReader();
+  reader.onload = function(e){
     try {
       var data = JSON.parse(e.target.result);
       if(!data.records || !data.workers){toast('ملف غير صالح','error');return;}
@@ -1378,15 +1373,18 @@ function restoreJSON(input){
       if(!db){toast('يجب الاتصال بـ Firebase أولاً','error');return;}
       toast('جاري الاستعادة...','info');
       syncBadge('syncing');
+      // Save settings
       db.collection('settings').doc('workshop_config').set({
         workers: data.workers, models: data.models, colors: data.colors
       }).then(function(){
+        // Delete existing records then re-add
         return db.collection('records').get();
       }).then(function(snap){
         var batch = db.batch();
         snap.docs.forEach(function(d){ batch.delete(d.ref); });
         return batch.commit();
       }).then(function(){
+        // Add restored records in batches of 500
         var recs = data.records;
         var batches = [];
         for(var i=0; i<recs.length; i+=400){
@@ -1414,12 +1412,13 @@ function restoreJSON(input){
     }
   };
   reader.readAsText(file);
-  input.value='';
+  input.value=''; // allow re-selecting same file
 }
 
 // ── Export ────────────────────────────────────────────
 function exportXLSX(){
-  var wb=XLSX.utils.book_new();  var am=Array.from(new Set(models.concat(records.map(function(r){return r.model;}))));
+  var wb=XLSX.utils.book_new();
+  var am=Array.from(new Set(models.concat(records.map(function(r){return r.model;}))));
   var r1=[['#','الموظفة','الموديل','المقاس','اللون','العدد','التاريخ','ملاحظة']];
   records.forEach(function(r,i){r1.push([i+1,r.worker,r.model,r.size,r.color,r.qty,r.date,r.note||'']);});
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(r1),'السجلات');
@@ -1433,12 +1432,14 @@ function exportMonthly(){
   var mn=AM[rMonth]+' '+rYear;
   var wb=XLSX.utils.book_new();
 
+  // ── ورقة 1: السجلات التفصيلية ──
   var r1=[['#','الموظفة','الموديل','المقاس','اللون','العدد','التاريخ']];
   mr.forEach(function(r,i){r1.push([i+1,r.worker,r.model,r.size,r.color,r.qty,r.date]);});
   var ws1=XLSX.utils.aoa_to_sheet(r1);
   ws1['!cols']=[{wch:4},{wch:12},{wch:12},{wch:8},{wch:10},{wch:8},{wch:12}];
   XLSX.utils.book_append_sheet(wb,ws1,'السجلات');
 
+  // ── ورقة 2: إجمالي إنتاج كل موظفة ──
   var am=Array.from(new Set(mr.map(function(r){return r.model;})));
   var wt={};
   workers.forEach(function(w){wt[w]={total:0};am.forEach(function(m){wt[w][m]=0;});});
@@ -1448,9 +1449,11 @@ function exportMonthly(){
     wt[r.worker][r.model]+=r.qty;
     wt[r.worker].total+=r.qty;
   });
+  // رأس الجدول: الموظفة + الموديلات + الإجمالي
   var r2=[['التقرير الشهري — '+mn],['']];
   var header=['الموظفة'].concat(am).concat(['الإجمالي']);
   r2.push(header);
+  // بيانات كل موظفة
   var grandTotal=0;
   var modelTotals={};am.forEach(function(m){modelTotals[m]=0;});
   workers.forEach(function(w){
@@ -1461,6 +1464,7 @@ function exportMonthly(){
     grandTotal+=wd.total||0;
     r2.push(row);
   });
+  // صف الإجمالي الكلي
   var totalRow=['الإجمالي الكلي'];
   am.forEach(function(m){totalRow.push(modelTotals[m]||0);});
   totalRow.push(grandTotal);
@@ -1468,7 +1472,8 @@ function exportMonthly(){
   r2.push(totalRow);
   var ws2=XLSX.utils.aoa_to_sheet(r2);
   var cols=[{wch:14}];am.forEach(function(){cols.push({wch:10});});cols.push({wch:12});
-  ws2['!cols']=cols;  XLSX.utils.book_append_sheet(wb,ws2,'إجمالي الموظفات');
+  ws2['!cols']=cols;
+  XLSX.utils.book_append_sheet(wb,ws2,'إجمالي الموظفات');
 
   XLSX.writeFile(wb,'تقرير_'+mn.replace(' ','_')+'.xlsx');
   toast('تم التصدير 📊','success');
@@ -1477,6 +1482,7 @@ function exportMonthly(){
 // ══════════════════════════════════════════════════════
 //  🔔 الإشعارات اليومية
 // ══════════════════════════════════════════════════════
+
 function buildDailyReport() {
   var today = new Date().toISOString().split('T')[0];
   var todayRecs = records.filter(function(r){ return r.date === today; });
@@ -1517,7 +1523,8 @@ function sendDailyNotif() {
 function sendTestNotif() {
   if(Notification.permission === 'denied') {
     toast('الإشعارات محظورة من إعدادات المتصفح','error'); return;
-  }  Notification.requestPermission().then(function(p){
+  }
+  Notification.requestPermission().then(function(p){
     if(p === 'granted') {
       sendDailyNotif();
       toast('تم إرسال إشعار تجريبي ✓','success');
@@ -1557,16 +1564,18 @@ function scheduleDailyNotif() {
 
   var now  = new Date();
   var next = new Date();
-  next.setHours(22, 0, 0, 0);
-  if(next <= now) next.setDate(next.getDate() + 1);
+  next.setHours(22, 0, 0, 0); // 10 مساءً
+  if(next <= now) next.setDate(next.getDate() + 1); // إذا فات وقتها، غداً
   var ms = next - now;
 
   _notifTimer = setTimeout(function(){
     sendDailyNotif();
+    // جدوِل للغد
     _notifTimer = setInterval(function(){
       sendDailyNotif();
     }, 24 * 60 * 60 * 1000);
-  }, ms);}
+  }, ms);
+}
 
 function clearDailyNotif() {
   if(_notifTimer) { clearTimeout(_notifTimer); clearInterval(_notifTimer); _notifTimer = null; }
@@ -1580,6 +1589,7 @@ var _pwaPrompt = null;
 window.addEventListener('beforeinstallprompt', function(e) {
   e.preventDefault();
   _pwaPrompt = e;
+  // أظهر البانر إذا لم يُرفض سابقاً
   if(localStorage.getItem('pwa_dismissed') !== '1') {
     var banner = document.getElementById('pwa-banner');
     if(banner) banner.style.display = 'block';
@@ -1616,14 +1626,39 @@ function pwaInstallFromSettings() {
     toast('على iOS: المشاركة ← إضافة للشاشة الرئيسية','info');
   }
 }
+
 function pwaDismiss() {
   document.getElementById('pwa-banner').style.display = 'none';
   localStorage.setItem('pwa_dismissed','1');
 }
 
+// ── Start ─────────────────────────────────────────────
+window.onload = function(){
+  initApp();
+  // تشغيل الجدولة إذا كانت مفعّلة
+  if(localStorage.getItem('daily_notif') === '1') {
+    Notification.requestPermission().then(function(p){
+      if(p === 'granted') scheduleDailyNotif();
+    });
+  }
+};
+</script>
+  <script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js")
+    .then(() => console.log("Service Worker Registered"))
+    .catch(err => console.error("SW Error", err));
+}
+
 // ===== CUTTING MODULE =====
 var cutRecords=[], editingCutId=null, ctSelSizes=[];
 var ALL_SIZES=['XS','S','M','L','XL','XXL','3XL'];
+
+db.collection('cut_records').orderBy('createdAt','desc').onSnapshot(function(snap){
+  cutRecords=[];
+  snap.forEach(function(d){cutRecords.push(Object.assign({id:d.id},d.data()));});
+  if(document.getElementById('adminScroll').dataset.page==='cutting') renderCutPage();
+}, function(err){console.log('cut_records listener error:',err);});
 
 function renderCutPage(){
   var list=document.getElementById('cutList');
@@ -1661,23 +1696,24 @@ function renderCutPage(){
         (r.note?'<div class="cut-card-row"><span class="cut-card-lbl">📝 ملاحظة</span><span class="cut-card-val">'+r.note+'</span></div>':'')+
       '</div>'+
       (canEdit?'<div class="cut-card-actions">'+
-        '<button class="cut-act-btn" onclick="openCutSheet(\'' + r.id + '\')">✏️ تعديل</button>'+
-        (isAdmin?'<button class="cut-act-btn danger" onclick="deleteCutRecord(\'' + r.id + '\')">🗑️ حذف</button>':'')+
+        '<button class="cut-act-btn" onclick="openCutSheet(''+r.id+'')">✏️ تعديل</button>'+
+        (isAdmin?'<button class="cut-act-btn danger" onclick="deleteCutRecord(''+r.id+'')">🗑️ حذف</button>':'')+
       '</div>':'')+
-    '</div>';  }).join('');
+    '</div>';
+  }).join('');
 }
 
 function buildSizesGrid(){
   document.getElementById('ct_sizes_grid').innerHTML=ALL_SIZES.map(function(s){
     var on=ctSelSizes.indexOf(s)>-1;
-    return '<button type="button" class="cut-size-chip'+(on?' on':'')+'" onclick="toggleCutSize(this,\''+s+'\')" style="margin:.2rem">'+ s+'</button>';
+    return '<button type="button" class="cut-size-chip'+(on?' on':'')+'" onclick="toggleCutSize(''+s+'')">'+s+'</button>';
   }).join('');
 }
 
-function toggleCutSize(btn, s){
+function toggleCutSize(s){
   var i=ctSelSizes.indexOf(s);
-  if(i>-1){ ctSelSizes.splice(i,1); btn.classList.remove('on'); }
-  else { ctSelSizes.push(s); btn.classList.add('on'); }
+  if(i>-1) ctSelSizes.splice(i,1); else ctSelSizes.push(s);
+  buildSizesGrid();
 }
 
 function calcCutPerPiece(){
@@ -1713,7 +1749,8 @@ function openCutSheet(id){
 }
 
 function closeCutSheet(){
-  document.getElementById('cutOverlay').classList.remove('show');}
+  document.getElementById('cutOverlay').classList.remove('show');
+}
 
 function saveCutRecord(){
   var model=document.getElementById('ct_model').value.trim();
@@ -1750,22 +1787,6 @@ function deleteCutRecord(id){
     .catch(function(e){toast('خطأ: '+e.message,'error');});
 }
 
-// ── Start ─────────────────────────────────────────────
-window.onload = function(){
-  initApp();
-  if(localStorage.getItem('daily_notif') === '1') {
-    Notification.requestPermission().then(function(p){
-      if(p === 'granted') scheduleDailyNotif();
-    });
-  }
-};
-</script>
-
-<script>
-if ("serviceWorker" in navigator) {  navigator.serviceWorker.register("sw.js")
-    .then(() => console.log("Service Worker Registered"))
-    .catch(err => console.error("SW Error", err));
-}
 </script>
 
 <!-- CUT SHEET OVERLAY -->
@@ -1806,4 +1827,4 @@ if ("serviceWorker" in navigator) {  navigator.serviceWorker.register("sw.js")
 </div>
 
 </body>
-  </html>
+</html>
