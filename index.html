@@ -1293,6 +1293,9 @@ function backupJSON(){
     colors:  colors,
     records: records.map(function(r){
       return {worker:r.worker,model:r.model,size:r.size,color:r.color,qty:r.qty,date:r.date,note:r.note||'',createdAt:r.createdAt||0};
+    }),
+    cut_records: cutRecords.map(function(r){
+      return {model:r.model,sizes:r.sizes||[],fabric:r.fabric,qty:r.qty,perPiece:r.perPiece,date:r.date,note:r.note||'',savedBy:r.savedBy||''};
     })
   };
   var blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
@@ -1343,7 +1346,27 @@ function restoreJSON(input){
           });
         }, Promise.resolve());
       }).then(function(){
-        toast('تمت الاستعادة بنجاح ✓ ('+data.records.length+' سجل)','success');
+        // استعادة سجلات القص إن وجدت
+        if(data.cut_records && data.cut_records.length){
+          return db.collection('cut_records').get().then(function(snap){
+            var b=db.batch();
+            snap.docs.forEach(function(d){b.delete(d.ref);});
+            return b.commit();
+          }).then(function(){
+            var cuts=data.cut_records;
+            var batches=[];
+            for(var i=0;i<cuts.length;i+=400) batches.push(cuts.slice(i,i+400));
+            return batches.reduce(function(p,chunk){
+              return p.then(function(){
+                var b=db.batch();
+                chunk.forEach(function(r){ b.set(db.collection('cut_records').doc(),r); });
+                return b.commit();
+              });
+            }, Promise.resolve());
+          });
+        }
+      }).then(function(){
+        toast('تمت الاستعادة بنجاح ✓ ('+data.records.length+' سجل'+(data.cut_records?' + '+data.cut_records.length+' مطلة':'')+')','success');
         syncBadge('ok');
       }).catch(function(err){
         toast('خطأ في الاستعادة','error');
@@ -1360,10 +1383,20 @@ function restoreJSON(input){
 
 function exportXLSX(){
   var wb=XLSX.utils.book_new();
-  var am=Array.from(new Set(models.concat(records.map(function(r){return r.model;}))));
+  // ورقة السجلات
   var r1=[['#','الموظفة','الموديل','المقاس','اللون','العدد','التاريخ','ملاحظة']];
   records.forEach(function(r,i){r1.push([i+1,r.worker,r.model,r.size,r.color,r.qty,r.date,r.note||'']);});
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(r1),'السجلات');
+  var ws1=XLSX.utils.aoa_to_sheet(r1);
+  ws1['!cols']=[{wch:4},{wch:12},{wch:14},{wch:8},{wch:10},{wch:7},{wch:12},{wch:16}];
+  XLSX.utils.book_append_sheet(wb,ws1,'السجلات');
+  // ورقة مجموعة القص
+  var r2=[['#','الموديل','المقاسات','المتراج (م)','العدد (جبة)','متراج الجبة (م)','التاريخ','ملاحظة']];
+  cutRecords.forEach(function(r,i){
+    r2.push([i+1,r.model,(r.sizes||[]).join(' - '),r.fabric,r.qty,r.perPiece||parseFloat((r.fabric/r.qty).toFixed(3)),r.date,r.note||'']);
+  });
+  var ws2=XLSX.utils.aoa_to_sheet(r2);
+  ws2['!cols']=[{wch:4},{wch:20},{wch:18},{wch:12},{wch:12},{wch:15},{wch:12},{wch:16}];
+  XLSX.utils.book_append_sheet(wb,ws2,'مجموعة القص');
   var d=new Date();
   XLSX.writeFile(wb,'ورشة_الخياطة_'+d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()+'.xlsx');
   toast('تم التصدير 📊','success');
